@@ -1,0 +1,118 @@
+<html>
+	<head>
+		<title>Square Life</title>
+		<link href="/assets/styles.css" rel="stylesheet" type="text/css" />
+		<script
+			src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+			integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
+			crossorigin="anonymous"
+		></script>
+		<link
+			rel="stylesheet"
+			href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+			integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+			crossorigin="anonymous"
+		/>
+		<script
+			src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+			integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+			crossorigin="anonymous"
+		></script>
+		<script
+			src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+			integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+			crossorigin="anonymous"
+		></script>
+	</head>
+	<body>
+		<div class="container">
+			<div class="py-5 text-center">
+				<h1>Support Request Form</h1>
+				<p class="lead">
+					Select one from the given options and fill in the form to
+					speak to a support agent.
+				</p>
+			</div>
+		</div>
+		<div class="container">
+			<form id="customer_service" method="POST" action="/submitted">
+				<div class="form-group row">
+					<label for="customer_option" class="col-sm-2 col-form-label"
+						>Select a problem</label
+					>
+					<div class="col-sm-10">
+						<select
+							id="customer_option"
+							name="customer_option"
+							class="form-control"
+						>
+							<% for(var i = 0;i < data.length;i++){ %>
+							<option value="<%= data[i].id %>"
+								><%= data[i].name %></option
+							>
+							<% } %>
+						</select>
+					</div>
+				</div>
+				<div class="form-group row">
+					<label class="col-sm-2 col-form-label" for="firstname">
+						Name
+					</label>
+					<div class="col">
+						<input
+							type="text"
+							class="form-control"
+							placeholder="First name*"
+							id="firstname"
+							name="firstname"
+							required
+						/>
+					</div>
+					<div class="col">
+						<input
+							type="text"
+							class="form-control"
+							placeholder="Last name*"
+							id="lastname"
+							name="lastname"
+							required
+						/>
+					</div>
+				</div>
+				<div class="form-group row">
+					<label for="customer_email" class="col-sm-2 col-form-label"
+						>Email
+					</label>
+					<div class="col-sm-10">
+						<input
+							type="email"
+							class="form-control"
+							id="customer_email"
+							name="customer_email"
+							placeholder="Email Address*"
+							required
+						/>
+					</div>
+				</div>
+				<button
+					class="btn btn-primary"
+					type="submit"
+					onclick="getOption()"
+				>
+					Submit
+				</button>
+				<!--<button type="submit" onclick=getOption()>Start Chat</button>-->
+				<!--<input type="submit" onclick=getOption() value="Submit">-->
+			</form>
+		</div>
+
+		<script type="text/javascript">
+			function getOption() {
+				selectElement = document.querySelector("#customer_option");
+				output =
+					selectElement.options[selectElement.selectedIndex].value;
+				document.querySelector(".output").textContent = output;
+			}
+		</script>
+	</body>
+</html>
