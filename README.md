@@ -16,4 +16,9 @@ SquareLife runs on Alactel Lucent Rainbow SDK , our project consist of 3 compone
 - FrontEnd (ExpressJS & RainbowWebSDK) & BackEnd (RainbowNodeSDK)
 - Routing Engine (Java)
 - Unit Testing (Java: J-Unit Testing and Selenium)
-
+------
+##### Done By:
+- [Leo Ding Hao](https://github.com/leo-dh)
+- [Melissa](https://github.com/Melissaa12)
+- [Xie Han Keong](https://github.com/han-keong)
+- [Phang Teng Fone](https://github.com/tengfone)
