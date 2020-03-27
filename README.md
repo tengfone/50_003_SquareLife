@@ -13,9 +13,9 @@ support via chat or audio call.
 agent based on agent availability, skills etc
 ------
 SquareLife runs on Alactel Lucent Rainbow SDK , our project consist of 3 components:
-- FrontEnd (ExpressJS & RainbowWebSDK) & BackEnd (RainbowNodeSDK)
-- Routing Engine (Java)
-- Unit Testing (Java: J-Unit Testing and Selenium)
+- [FrontEnd (ExpressJS & RainbowWebSDK) & BackEnd (RainbowNodeSDK)](/FrontEnd)
+- [Routing Engine (Java)](https://github.com/han-keong/routingengine)
+- [Unit Testing (Java: J-Unit Testing and Selenium)](/SquareLifeTest)
 ------
 ##### Done By:
 - [Leo Ding Hao](https://github.com/leo-dh)
