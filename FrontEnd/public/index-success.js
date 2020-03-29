@@ -78,21 +78,63 @@ function setConvo() {
                     let message = event.detail.message;
                     let conversation = event.detail.conversation;
 
-                    // Do something with the new message received
-                    console.log(message);
-                    rainbowSDK.im.markMessageFromConversationAsRead(
-                        conversation,
-                        message
-                    );
-                    addMessage(
-                        selectedContact.firstname +
-                        " " +
-                        selectedContact.lastname,
-                        message.data,
-                        "left"
-                    );
-                }
-            );
+                    //COMMANDS
+					if(message.data=="//endchat" ){
+
+						let message2 = "The chat session will now be closed.";
+
+						//send data to routing engine that chat is closed so that new user can be reassigned to the agent
+
+						addMessage(
+							selectedContact.firstname +
+								" " +
+								selectedContact.lastname,
+							message2,
+							
+							"left"
+						);
+					}
+					
+					if(message.data=="//reassignagent" ){
+						
+						//pull&store data on which agent
+						
+						
+						//send data to routing engine
+
+						let message2 = "We will now be reassigning another agent to you.";
+						
+						addMessage(
+							selectedContact.firstname +
+								" " +
+								selectedContact.lastname,
+							message2,
+							
+							"left"
+						);
+                    }
+                    
+					else{
+						console.log(message);
+						rainbowSDK.im.markMessageFromConversationAsRead(
+							conversation,
+							message
+						);
+						
+						addMessage(
+							selectedContact.firstname +
+								" " +
+								selectedContact.lastname,
+							message.data ,
+							
+							"left"
+						);
+                    }
+                    
+					// Do something with the new message received
+				
+				}
+			);
             rainbowSDK.im.sendMessageToConversation(
                 conversation,
                 "The session has begun with " + customer_email
