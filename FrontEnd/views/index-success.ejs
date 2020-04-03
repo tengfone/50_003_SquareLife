@@ -2,7 +2,6 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<title>Chat - Customer Module</title>
-		<link type="text/css" rel="stylesheet" href="style.css" />
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -42,7 +41,7 @@
 		<video id="globalVideoTag" autoplay style="display:none;"></video>
 		<audio id="globalAudioTag" autoplay style="display:none;"></audio>
 		<div id="wrapper">
-			<div id="menu" class="py-5 text-center">
+			<div id="menu" class="py-1 text-center">
 				<h1 class="welcome">Welcome <%= firstName %> <%= lastName %></h1>
 				<br />
 				<a
@@ -55,14 +54,7 @@
 				>
 				<div style="clear:both"></div>
 			</div>
-			<div class="container mb-3 " id="chatlog">
-				<!-- <div>
-    <p class="text-right text-muted mb-n1">
-        User
-    </p>
-    <h3 class="text-right">Test</h3>
-</div> -->
-			</div>
+			<div class="container mb-3 " id="chatlog"></div>
 			<div class="container">
 				<div class="input-group">
 					<input
