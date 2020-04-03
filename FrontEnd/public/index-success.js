@@ -1,33 +1,97 @@
 import rainbowSDK from "./rainbow-sdk.min.js";
 
-let selectedContact = null;
-const applicationID = "6095e9a0594e11eabf7e77d14e87b936";
-const applicationSecret =
+let contact = null;
+const APPLICATION_ID = "6095e9a0594e11eabf7e77d14e87b936";
+const APPLICATION_SECRET =
 	"NSxjiXUqyxYPdcT2Y4y8Dgje3gfUQCxyTNCoEP81vWrhsobuVGjwCsCpqxIMNQUU";
-let id = null;
+let agentId = null;
 let associatedConversation = null;
+let socket, agentUUID, clientUUID;
 
-// TODO 'User is typing' UI implmentation
-// TODO WebSocket Implementation
+document.addEventListener("DOMContentLoaded", async function(event) {
+	await loadRainbowSDK();
+	await Promise.all([initRainbowSDK(), initSocketConnection()]);
+	initChat();
+});
 
-function onReady() {
-	console.log("[RainbowWebSDK] :: On SDK Ready !");
+async function initSocketConnection() {
+	const WEBSOCKET_URL = "ws://localhost:4000/";
+	socket = new WebSocket(WEBSOCKET_URL);
+	let waitForConnection = new Promise((resolve, reject) => {
+		socket.addEventListener(
+			"open",
+			event => {
+				console.log("Connection has been opened");
+				resolve();
+			},
+			{ once: true }
+		);
+		socket.addEventListener("close", event => {
+			console.log("Connection has been closed.");
+		});
+	});
+	await waitForConnection;
+	clientUUID = await sendSupportRequest();
+	[agentId, agentUUID] = await waitForAgent();
+	console.log(agentId);
 }
 
-function onLoaded() {
-	console.log("[RainbowWebSDK] :: On SDK Loaded !");
-	initRainbowSDK();
+function sendSupportRequest() {
+	return new Promise((resolve, reject) => {
+		socket.send(
+			`new_support_request {name:"${firstName +
+				lastName}", email:"${customer_email}", type:${customer_option}}`
+		);
+		socket.addEventListener(
+			"message",
+			event => {
+				let response = JSON.parse(event.data);
+				console.log(response);
+				if (response.result == "success") {
+					resolve(response.payload.uuid);
+				} else {
+					reject(response.payload);
+				}
+			},
+			{ once: true }
+		);
+	});
 }
 
-document.addEventListener(rainbowSDK.RAINBOW_ONREADY, onReady);
-document.addEventListener(rainbowSDK.RAINBOW_ONLOADED, onLoaded);
+function waitForAgent(uuid = clientUUID) {
+	return new Promise((resolve, reject) => {
+		socket.send(`wait_for_agent {uuid:"${uuid}"}`);
+		socket.addEventListener(
+			"message",
+			event => {
+				let response = JSON.parse(event.data);
+				console.log(response);
+				if (response.result == "success") {
+					resolve([
+						response.payload.assigned_agent.rainbowID,
+						response.payload.assigned_agent.uuid
+					]);
+				} else {
+					reject(response.payload);
+				}
+			},
+			{ once: true }
+		);
+	});
+}
 
-rainbowSDK.start();
-rainbowSDK.load();
+function loadRainbowSDK() {
+	return new Promise((resolve, reject) => {
+		rainbowSDK.start();
+		rainbowSDK.load();
+		document.addEventListener(rainbowSDK.RAINBOW_ONLOADED, resolve(), {
+			once: true
+		});
+	});
+}
 
-// Ideally to call when client receives an id from the routing engine
 async function initRainbowSDK() {
-	let initSDK = rainbowSDK.initialize(applicationID, applicationSecret);
+	let initSDK = rainbowSDK.initialize(APPLICATION_ID, APPLICATION_SECRET);
 	let request = new Request("https://localhost:3000/sdk/makeaccount", {
 		method: "POST",
 		headers: {
@@ -55,14 +119,12 @@ async function initRainbowSDK() {
 	}
 }
 
-// To be called when client receives id from routing engine
-async function initChat(id) {
+async function initChat(id = agentId) {
 	try {
-		let contact = await getContact(id);
-		let conversation = await rainbowSDK.conversations.openConversationForContact(
+		contact = await getContact(id);
+		associatedConversation = await rainbowSDK.conversations.openConversationForContact(
 			contact
 		);
-		associatedConversation = conversation;
 		initUI();
 	} catch (err) {
 		console.log(err);
@@ -88,30 +150,137 @@ function getContact(id) {
 		});
 }
 
-function initUI(conversation) {
+function closeSupportRequest() {
+	return new Promise((resolve, reject) => {
+		socket.send(`close_support_request {uuid:"${clientUUID}"}`);
+		socket.addEventListener(
+			"message",
+			event => {
+				let response = JSON.parse(event.data);
+				console.log(response);
+				if (response.result == "success") {
+					resolve();
+				} else {
+					reject(response.payload);
+				}
+			},
+			{ once: true }
+		);
+	});
+}
+
+function changeSupportRequestType(type) {
+	return new Promise((resolve, reject) => {
+		socket.send(
+			`change_support_request_type {uuid:"${clientUUID}", type:${type}}`
+		);
+		socket.addEventListener(
+			"message",
+			event => {
+				let response = JSON.parse(event.data);
+				console.log(response);
+				if (response.result == "success") {
+					resolve();
+				} else {
+					reject(response.payload);
+				}
+			},
+			{ once: true }
+		);
+	});
+}
+
+function dropSupportRequest() {
+	return new Promise((resolve, reject) => {
+		socket.send(`drop_support_request {uuid:"${agentUUID}"}`);
+		socket.addEventListener(
+			"message",
+			event => {
+				let response = JSON.parse(event.data);
+				console.log(response);
+				if (response.result == "success") {
+					resolve();
+				} else {
+					reject(response.payload);
+				}
+			},
+			{ once: true }
+		);
+	});
+}
+
+async function reassignAgent(type) {
+	await dropSupportRequest();
+	await changeSupportRequestType(type);
+	[agentId, agentUUID] = await waitForAgent();
+	console.log(agentId);
+}
+
+function elementRemoveListeners(el) {
+	let new_el = el.cloneNode(true);
+	el.parentNode.replaceChild(new_el, el);
+}
+
+async function reinitialiseChat(id = agentId) {
+	elementRemoveListeners(document.getElementById("voiceChat"));
+	elementRemoveListeners(document.getElementById("submitmsg"));
+	elementRemoveListeners(document.getElementById("usermsg"));
+
+	// # TODO Disable UI / Loading Indicator?
+	try {
+		contact = await getContact(id);
+		associatedConversation = await rainbowSDK.conversations.openConversationForContact(
+			contact
+		);
+		assignInputListeners();
+		rainbowSDK.im.sendMessageToConversation(
+			associatedConversation,
+			"The session has begun with " + customer_email
+		);
+	} catch (err) {
+		console.log(err);
+	}
+}
+
+function assignInputListeners() {
 	/* VOICE SUPPORT */
 	document.getElementById("voiceChat").addEventListener("click", () => {
 		callinit();
 	});
-
 	document.getElementById("submitmsg").addEventListener("click", () => {
-		message = document.getElementById("usermsg").value;
+		let message = document.getElementById("usermsg").value;
 		document.getElementById("usermsg").value = "";
-		rainbowSDK.im.sendMessageToConversation(conversation, message);
+		rainbowSDK.im.sendMessageToConversation(associatedConversation, message);
 		addMessage(firstName + " " + lastName, message, "right");
 	});
-
 	document.getElementById("usermsg").addEventListener("keydown", key => {
 		if (key.keyCode == 13) {
-			message = document.getElementById("usermsg").value;
+			let message = document.getElementById("usermsg").value;
 			document.getElementById("usermsg").value = "";
-			rainbowSDK.im.sendMessageToConversation(conversation, message);
+			rainbowSDK.im.sendMessageToConversation(associatedConversation, message);
 			addMessage(firstName + " " + lastName, message, "right");
 		}
 	});
+}
+
+function disableInputFields() {
+	document.getElementById("voiceChat").disabled = true;
+	document.getElementById("voiceChat").style.cursor = "default";
+	document.getElementById("submitmsg").disabled = true;
+	document.getElementById("submitmsg").style.cursor = "default";
+	document.getElementById("usermsg").disabled = true;
+}
+
+function initUI(conversation) {
+	assignInputListeners();
+	window.onunload = async () => {
+		try {
+			await closeSupportRequest();
+		} catch (err) {}
+	};
 	document.addEventListener(
 		rainbowSDK.im.RAINBOW_ONNEWIMMESSAGERECEIVED,
-		event => {
+		async event => {
 			let message = event.detail.message;
 			let conversation = event.detail.conversation;
 
@@ -120,52 +289,54 @@ function initUI(conversation) {
 				let message2 = "The chat session will now be closed.";
 
 				//send data to routing engine that chat is closed so that new user can be reassigned to the agent
-
+				await closeSupportRequest();
+				socket.close();
 				addMessage(
-					selectedContact.firstname + " " + selectedContact.lastname,
+					contact.firstname + " " + contact.lastname,
 					message2,
 					"left"
 				);
-			}
-
-			if (message.data == "//reassignagent") {
+				disableInputFields();
+			} else if (message.data == "//reassignagent") {
 				//pull&store data on which agent
-
+				/*
+					# TODO
+					Need to include which type of request in message.data E.g. //reassignagent_{type}
+					to facilitate change of request type.
+				*/
 				//send data to routing engine
+				await reassignAgent(2); // Type:2 is currently used as placeholder for the above TODO
 
 				let message2 = "We will now be reassigning another agent to you.";
-
 				addMessage(
-					selectedContact.firstname + " " + selectedContact.lastname,
+					contact.firstname + " " + contact.lastname,
 					message2,
-
 					"left"
 				);
+				reinitialiseChat();
 			} else {
 				console.log(message);
 				rainbowSDK.im.markMessageFromConversationAsRead(conversation, message);
 
 				addMessage(
-					selectedContact.firstname + " " + selectedContact.lastname,
+					contact.firstname + " " + contact.lastname,
 					message.data,
 					"left"
 				);
 			}
-
-			// Do something with the new message received
 		}
 	);
 	rainbowSDK.im.sendMessageToConversation(
-		conversation,
+		associatedConversation,
 		"The session has begun with " + customer_email
 	);
+
 	document.getElementById("usermsg").disabled = false;
 	let submitbtn = document.getElementById("submitmsg");
 	submitbtn.removeChild(document.getElementById("loadanimation"));
 	submitbtn.innerHTML = "Send";
 	submitbtn.disabled = false;
 
-	document.getElementById("voiceChat").disabled = false;
 	let voiceChatbtn = document.getElementById("voiceChat");
 	voiceChatbtn.removeChild(document.getElementById("loadanimation"));
 	voiceChatbtn.innerHTML = "Voice Chat";
@@ -247,7 +418,7 @@ function callinit() {
 	rainbowSDK.webRTC.useSpeaker("default");
 
 	/* Call this API to call a contact using only audio stream*/
-	let res = rainbowSDK.webRTC.callInAudio(selectedContact);
+	let res = rainbowSDK.webRTC.callInAudio(contact);
 
 	if (res.label === "OK") {
 		document.getElementById("p1").innerHTML =

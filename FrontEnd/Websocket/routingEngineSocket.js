@@ -11,11 +11,6 @@ class RoutingEngineSocket {
 		this.open = false;
 	}
 
-	/*
-    TODO
-    Iterate through list of agents using a predefined list (file)
-    Create the agents in the routing engine and save the details locally (memory/file)
-  */
 	async sendAgentDetails() {
 		let agentDetails = {};
 		try {

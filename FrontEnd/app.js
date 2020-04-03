@@ -24,25 +24,24 @@ class WebApp {
 		*/
 	}
 
-	start(port = 3000) {
+	async start(port = 3005) {
 		console.log("SDK Starting");
-		this.sdk.start().then(result => {
-			console.log(result);
-			this.initializeApp(this.sdk);
-			this.app = app;
-			https
-				.createServer(
-					{
-						key: fs.readFileSync("server.key"),
-						cert: fs.readFileSync("server.cert")
-					},
-					app
-				)
-				.listen(port, function() {
-					console.log(`Express is running on port ${port}`);
-				});
-			//openssl req -nodes -new -x509 -keyout server.key -out server.cert
-		});
+		let result = await this.sdk.start();
+		console.log(result);
+		this.initializeApp(this.sdk);
+		this.app = app;
+		https
+			.createServer(
+				{
+					key: fs.readFileSync("server.key"),
+					cert: fs.readFileSync("server.cert")
+				},
+				app
+			)
+			.listen(port, function() {
+				console.log(`Express is running on port ${port}`);
+			});
+		//openssl req -nodes -new -x509 -keyout server.key -out server.cert
 		// this.routingEngineSocket.start();
 	}
 
