@@ -8,7 +8,7 @@ let agentId = null;
 let associatedConversation = null;
 let socket, agentUUID, clientUUID;
 
-document.addEventListener("DOMContentLoaded", async function(event) {
+document.addEventListener("DOMContentLoaded", async function (event) {
 	await loadRainbowSDK();
 	await Promise.all([initRainbowSDK(), initSocketConnection()]);
 	initChat();
@@ -20,13 +20,13 @@ async function initSocketConnection() {
 	let waitForConnection = new Promise((resolve, reject) => {
 		socket.addEventListener(
 			"open",
-			event => {
+			(event) => {
 				console.log("Connection has been opened");
 				resolve();
 			},
 			{ once: true }
 		);
-		socket.addEventListener("close", event => {
+		socket.addEventListener("close", (event) => {
 			console.log("Connection has been closed.");
 		});
 	});
@@ -39,12 +39,13 @@ async function initSocketConnection() {
 function sendSupportRequest() {
 	return new Promise((resolve, reject) => {
 		socket.send(
-			`new_support_request {name:"${firstName +
-				lastName}", email:"${customer_email}", type:${customer_option}}`
+			`new_support_request {name:"${
+				firstName + lastName
+			}", email:"${customer_email}", type:${customer_option}}`
 		);
 		socket.addEventListener(
 			"message",
-			event => {
+			(event) => {
 				let response = JSON.parse(event.data);
 				console.log(response);
 				if (response.result == "success") {
@@ -63,13 +64,13 @@ function waitForAgent(uuid = clientUUID) {
 		socket.send(`wait_for_agent {uuid:"${uuid}"}`);
 		socket.addEventListener(
 			"message",
-			event => {
+			(event) => {
 				let response = JSON.parse(event.data);
 				console.log(response);
 				if (response.result == "success") {
 					resolve([
 						response.payload.assigned_agent.rainbowID,
-						response.payload.assigned_agent.uuid
+						response.payload.assigned_agent.uuid,
 					]);
 				} else {
 					reject(response.payload);
@@ -85,25 +86,25 @@ function loadRainbowSDK() {
 		rainbowSDK.start();
 		rainbowSDK.load();
 		document.addEventListener(rainbowSDK.RAINBOW_ONLOADED, resolve(), {
-			once: true
+			once: true,
 		});
 	});
 }
 
 async function initRainbowSDK() {
 	let initSDK = rainbowSDK.initialize(APPLICATION_ID, APPLICATION_SECRET);
-	let request = new Request("https://localhost:3000/sdk/makeaccount", {
+	let request = new Request("https://localhost:3005/sdk/makeaccount", {
 		method: "POST",
 		headers: {
 			Accept: "application/json",
-			"Content-Type": "application/json"
+			"Content-Type": "application/json",
 		},
 		body: JSON.stringify({
 			firstName: firstName,
 			lastName: lastName,
 			customer_option: customer_option,
-			customer_email: customer_email
-		})
+			customer_email: customer_email,
+		}),
 	});
 	let getCredentials = fetch(request);
 	try {
@@ -134,7 +135,7 @@ async function initChat(id = agentId) {
 function getContact(id) {
 	return rainbowSDK.contacts
 		.searchById(id)
-		.then(contact => {
+		.then((contact) => {
 			return new Promise((resolve, reject) => {
 				if (contact) {
 					console.log("Contact found");
@@ -144,7 +145,7 @@ function getContact(id) {
 				}
 			});
 		})
-		.catch(function(err) {
+		.catch(function (err) {
 			//Something when wrong with the server. Handle the trouble here
 			console.log(err);
 		});
@@ -155,7 +156,7 @@ function closeSupportRequest() {
 		socket.send(`close_support_request {uuid:"${clientUUID}"}`);
 		socket.addEventListener(
 			"message",
-			event => {
+			(event) => {
 				let response = JSON.parse(event.data);
 				console.log(response);
 				if (response.result == "success") {
@@ -176,7 +177,7 @@ function changeSupportRequestType(type) {
 		);
 		socket.addEventListener(
 			"message",
-			event => {
+			(event) => {
 				let response = JSON.parse(event.data);
 				console.log(response);
 				if (response.result == "success") {
@@ -195,7 +196,7 @@ function dropSupportRequest() {
 		socket.send(`drop_support_request {uuid:"${agentUUID}"}`);
 		socket.addEventListener(
 			"message",
-			event => {
+			(event) => {
 				let response = JSON.parse(event.data);
 				console.log(response);
 				if (response.result == "success") {
@@ -253,7 +254,7 @@ function assignInputListeners() {
 		rainbowSDK.im.sendMessageToConversation(associatedConversation, message);
 		addMessage(firstName + " " + lastName, message, "right");
 	});
-	document.getElementById("usermsg").addEventListener("keydown", key => {
+	document.getElementById("usermsg").addEventListener("keydown", (key) => {
 		if (key.keyCode == 13) {
 			let message = document.getElementById("usermsg").value;
 			document.getElementById("usermsg").value = "";
@@ -280,7 +281,7 @@ function initUI(conversation) {
 	};
 	document.addEventListener(
 		rainbowSDK.im.RAINBOW_ONNEWIMMESSAGERECEIVED,
-		async event => {
+		async (event) => {
 			let message = event.detail.message;
 			let conversation = event.detail.conversation;
 
@@ -385,29 +386,29 @@ function callinit() {
 	/* Ask the user to authorize the application to access to the media devices */
 	navigator.mediaDevices
 		.getUserMedia({ audio: true, video: false })
-		.then(function(stream) {
+		.then(function (stream) {
 			/* Stream received which means that the user has authorized the application to access to the audio and video devices. Local stream can be stopped at this time */
-			stream.getTracks().forEach(function(track) {
+			stream.getTracks().forEach(function (track) {
 				track.stop();
 			});
 
 			/*  Get the list of available devices */
 			navigator.mediaDevices
 				.enumerateDevices()
-				.then(function(devices) {
+				.then(function (devices) {
 					/* Do something for each device (e.g. add it to a selector list) */
-					devices.forEach(function(device) {
+					devices.forEach(function (device) {
 						if (device.deviceId == "default") {
 							console.log(device);
 						}
 					});
 				})
-				.catch(function(error) {
+				.catch(function (error) {
 					/* In case of error when enumerating the devices */
 					console.log("Error enum devices");
 				});
 		})
-		.catch(function(error) {
+		.catch(function (error) {
 			/* In case of error when authorizing the application to access the media devices */
 			console.log("Error Authorizing Application to access media devices");
 		});
