@@ -7,9 +7,9 @@ const APPLICATION_SECRET =
 let agentId = null;
 let associatedConversation = null;
 let socket, agentUUID, clientUUID;
+let userDLChatLog = ["Welcome To SquareLife Chat Log"];
 let closeBoolean = false;
 const timeoutinSeconds = 60 * 10;
-
 
 document.addEventListener("DOMContentLoaded", async function (event) {
     await loadRainbowSDK();
@@ -225,6 +225,7 @@ function elementRemoveListeners(el) {
 }
 
 async function reinitialiseChat(id = agentId) {
+    elementRemoveListeners(document.getElementById("dlchatlog"));
     elementRemoveListeners(document.getElementById("voiceChat"));
     elementRemoveListeners(document.getElementById("submitmsg"));
     elementRemoveListeners(document.getElementById("usermsg"));
@@ -254,6 +255,8 @@ function assignInputListeners() {
     document.getElementById("submitmsg").addEventListener("click", () => {
         let message = document.getElementById("usermsg").value;
         document.getElementById("usermsg").value = "";
+        let d = new Date().toLocaleString();
+        userDLChatLog.push(d + "<===> From: " + firstName + " " + lastName + ": " + message);
         rainbowSDK.im.sendMessageToConversation(associatedConversation, message);
         addMessage(firstName + " " + lastName, message, "right");
     });
@@ -261,13 +264,29 @@ function assignInputListeners() {
         if (key.keyCode == 13) {
             let message = document.getElementById("usermsg").value;
             document.getElementById("usermsg").value = "";
+            let d = new Date().toLocaleString();
+            userDLChatLog.push(d + "<===> From: " + firstName + " " + lastName + ": " + message);
             rainbowSDK.im.sendMessageToConversation(associatedConversation, message);
             addMessage(firstName + " " + lastName, message, "right");
         }
     });
+    document.getElementById("dlchatlog").addEventListener("click", () => {
+        // download chat log
+        console.log(userDLChatLog);
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([JSON.stringify(userDLChatLog)], {
+            type: "text/plain"
+        }));
+        a.setAttribute("download", "ChatLog.txt");
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    });
 }
 
 function disableInputFields() {
+    document.getElementById("dlchatlog").disabled = true;
+    document.getElementById("dlchatlog").style.cursor = "default";
     document.getElementById("voiceChat").disabled = true;
     document.getElementById("voiceChat").style.cursor = "default";
     document.getElementById("submitmsg").disabled = true;
@@ -277,101 +296,117 @@ function disableInputFields() {
 }
 
 function initUI(conversation) {
-	assignInputListeners();
-	window.onunload = async () => {
-		try {
-			await closeSupportRequest();
-		} catch (err) {
-		}
-	};
-	document.addEventListener(
-		rainbowSDK.im.RAINBOW_ONNEWIMMESSAGERECEIVED,
-		async event => {
-			let message = event.detail.message;
-			let conversation = event.detail.conversation;
+    assignInputListeners();
 
-			//COMMANDS
-			if (message.data == "//endchat") {
-				let message2 = "The chat session will now be closed.";
+    // todo: solve for user ENTERING their custom URL
+    window.onunload = async function () {
+        if (closeBoolean) {
+            return false;
+        } else {
+            endChat();
+            try {
+                await closeSupportRequest();
+            } catch (err){
 
-				//send data to routing engine that chat is closed so that new user can be reassigned to the agent
-				await closeSupportRequest();
-				socket.close();
-				addMessage(
-					contact.firstname + " " + contact.lastname,
-					message2,
-					"left"
-				);
-				disableInputFields();
-			} else if (message.data == "//reassignagent") {
-				//pull&store data on which agent
-				/*
+            }
+            socket.close();
+        }
+    }
+
+    // window.onunload = async () => {
+    //     try {
+    //         await closeSupportRequest();
+    //     } catch (err) {
+    //     }
+    // };
+
+    document.addEventListener(
+        rainbowSDK.im.RAINBOW_ONNEWIMMESSAGERECEIVED,
+        async event => {
+            let message = event.detail.message;
+            let conversation = event.detail.conversation;
+
+            //COMMANDS
+            if (message.data == "//endchat") {
+                let message2 = "The chat session will now be closed.";
+
+                //send data to routing engine that chat is closed so that new user can be reassigned to the agent
+                i
+            } else if (message.data == "//reassignagent") {
+                //pull&store data on which agent
+                /*
                     # TODO
                     Need to include which type of request in message.data E.g. //reassignagent_{type}
                     to facilitate change of request type.
                 */
-				//send data to routing engine
-				await reassignAgent(2); // Type:2 is currently used as placeholder for the above TODO
+                //send data to routing engine
+                await reassignAgent(2); // Type:2 is currently used as placeholder for the above TODO
 
-				let message2 = "We will now be reassigning another agent to you.";
-				addMessage(
-					contact.firstname + " " + contact.lastname,
-					message2,
-					"left"
-				);
-				reinitialiseChat();
-			} else {
-				console.log(message);
-				rainbowSDK.im.markMessageFromConversationAsRead(conversation, message);
+                let message2 = "We will now be reassigning another agent to you.";
+                addMessage(
+                    contact.firstname + " " + contact.lastname,
+                    message2,
+                    "left"
+                );
+                reinitialiseChat();
+            } else {
+                console.log(message);
+                let d = new Date().toLocaleString();
+                userDLChatLog.push(d + "<===> From: " + message.from.firstname + " " + message.from.lastname + ": " + message.data);
+                rainbowSDK.im.markMessageFromConversationAsRead(conversation, message);
+                addMessage(
+                    contact.firstname + " " + contact.lastname,
+                    message.data,
+                    "left"
+                );
+            }
+        }
+    );
+    rainbowSDK.im.sendMessageToConversation(
+        associatedConversation,
+        "The session has begun with " + customer_email
+    );
 
-				addMessage(
-					contact.firstname + " " + contact.lastname,
-					message.data,
-					"left"
-				);
-			}
-		}
-	);
-	rainbowSDK.im.sendMessageToConversation(
-		associatedConversation,
-		"The session has begun with " + customer_email
-	);
+    document.getElementById("usermsg").disabled = false;
+    let submitbtn = document.getElementById("submitmsg");
+    submitbtn.removeChild(document.getElementById("loadanimation"));
+    submitbtn.innerHTML = "Send";
+    submitbtn.disabled = false;
 
-	document.getElementById("usermsg").disabled = false;
-	let submitbtn = document.getElementById("submitmsg");
-	submitbtn.removeChild(document.getElementById("loadanimation"));
-	submitbtn.innerHTML = "Send";
-	submitbtn.disabled = false;
+    let voiceChatbtn = document.getElementById("voiceChat");
+    voiceChatbtn.removeChild(document.getElementById("loadanimation"));
+    voiceChatbtn.innerHTML = "Voice Chat";
+    voiceChatbtn.disabled = false;
 
-	let voiceChatbtn = document.getElementById("voiceChat");
-	voiceChatbtn.removeChild(document.getElementById("loadanimation"));
-	voiceChatbtn.innerHTML = "Voice Chat";
-	voiceChatbtn.disabled = false;
+    let chatDLbtn = document.getElementById("dlchatlog");
+    chatDLbtn.removeChild(document.getElementById("loadanimation"));
+    chatDLbtn.innerHTML = "Download Chat Log";
+    chatDLbtn.disabled = false;
 
+    let exitbtn = document.getElementById("exit");
+    exitbtn.disabled = false;
+    exitbtn.addEventListener("click", () => exitBtnSocket(), false);
 
-	let exitbtn = document.getElementById("exit");
-	exitbtn.disabled = false;
-	exitbtn.addEventListener("click",() => exitBtnSocket(), false);
-	async function exitBtnSocket(){
-		let confirmed = window.confirm("Exit To Main Menu?");
-		if (confirmed) {
-			endChat();
-			await closeSupportRequest();
-			socket.close();
-			window.location.pathname = '/'
-		}
-	}
+    async function exitBtnSocket() {
+        let confirmed = window.confirm("Exit To Main Menu?");
+        if (confirmed) {
+            endChat();
+            await closeSupportRequest();
+            socket.close();
+            window.location.pathname = '/'
+        }
+    }
 }
 
-function endChat(){
-	try {
-		rainbowSDK.im.sendMessageToConversation(
-			associatedConversation,
-			"The session has ended with " + customer_email
-		);
-	} catch (err) {
-		console.log(err);
-	}
+function endChat() {
+    try {
+        rainbowSDK.im.sendMessageToConversation(
+            associatedConversation,
+            "The session has ended with " + customer_email
+        );
+    } catch (err) {
+        console.log(err);
+    }
 }
 
 function addMessage(name, message, side) {
@@ -398,26 +433,26 @@ function addMessage(name, message, side) {
 
 function timeOut() {
 
-	let secondsSinceLastActivity = 0;
+    let secondsSinceLastActivity = 0;
 
-	// In Seconds
-	const maxInactivity = timeoutinSeconds;
+    // In Seconds
+    const maxInactivity = timeoutinSeconds;
 
 
-	// Prevent double load
-	let boolFlag = true;
+    // Prevent double load
+    let boolFlag = true;
 
-	setInterval(async function () {
+    setInterval(async function () {
         secondsSinceLastActivity++;
         // After timeout
         if (secondsSinceLastActivity > maxInactivity && boolFlag) {
-        	boolFlag = false;
-        	closeBoolean = true;
-			endChat();
-			window.alert("You have been logged out due to inactivity.");
-			await closeSupportRequest();
-			socket.close();
-			window.location.pathname = '/'
+            boolFlag = false;
+            closeBoolean = true;
+            endChat();
+            window.alert("You have been logged out due to inactivity.");
+            await closeSupportRequest();
+            socket.close();
+            window.location.pathname = '/'
         }
     }, 1000);
 
@@ -426,27 +461,17 @@ function timeOut() {
         secondsSinceLastActivity = 0;
     }
 
-	const activityEvents = [
-		'mousedown', 'mousemove', 'keydown',
-		'scroll', 'touchstart'
-	];
+    const activityEvents = [
+        'mousedown', 'mousemove', 'keydown',
+        'scroll', 'touchstart'
+    ];
 
-	activityEvents.forEach(function (eventName) {
+    activityEvents.forEach(function (eventName) {
         document.addEventListener(eventName, activity, true);
     });
 }
 
 timeOut();
-
-window.onunload = async function() {
-	if (closeBoolean) {
-		return false;
-	} else {
-		endChat();
-		await closeSupportRequest();
-		socket.close();
-	}
-}
 
 
 function voiceChat() {
