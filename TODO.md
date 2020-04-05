@@ -5,9 +5,9 @@
 1. **Methods that involve the Websocket Connection like `waitForAgent()` do not account for timeout (rejected Promises).**
    - Refer to RoutingEngine `wait_for_agent` method regarding the timeout conditions.
    - Need to periodically invoke `waitForAgent()` if timeout happens.
-2. Sometimes the support request is not closed properly. \
-   _E.g. user closes the page/navigates to some other page._
-   - Ensure that support request is closed before leaving the page otherwise the agent will be stuck in the "assigned" state.
+   
+~~2. Sometimes the support request is not closed properly. E.g. user closes the page/navigates to some other page.~~
+   ~~- Ensure that support request is closed before leaving the page otherwise the agent will be stuck in the "assigned" state.~~ 
 3. Within `async` functions, variables/function calls with the `await` keyword should be wrapped in a try/catch block if possible.
 4. `index-success.js` needs some tidying.
    - Currently having around 450 lines.
