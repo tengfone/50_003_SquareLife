@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const agentIds = require("..//rainbowSDK//agentIds");
+const agentIds = require("../rainbowSDK/agentIds");
 
 class SDKRouter {
 	constructor(sdk) {
@@ -30,7 +30,10 @@ class SDKRouter {
 		router.get("/status", (req, res) => {
 			res.status(200).send({
 				code: 0,
-				data: { status: this.sdk.state, version: this.sdk.version }
+				data: {
+					status: this.sdk.rainbowSDK.state,
+					version: this.sdk.rainbowSDK.version
+				}
 			});
 		});
 
@@ -43,12 +46,7 @@ class SDKRouter {
 			const language = "en-US";
 			const ttl = 60 * 10;
 			this.sdk.rainbowSDK.admin
-				.createGuestUser(
-					req.body.firstName,
-					req.body.lastName,
-					language,
-					ttl
-				)
+				.createGuestUser(req.body.firstName, req.body.lastName, language, ttl)
 				.then(guest => {
 					console.log({
 						loginEmail: guest.loginEmail,
