@@ -38,7 +38,6 @@ public class FrontEndTesting {
 		email = driver.findElement(By.id("customer_email"));
 		dropdown = new Select(driver.findElement(By.id("customer_option")));
 		submit = driver.findElement(By.className("btn-primary"));
-
 	}
 
 	@After
@@ -471,5 +470,61 @@ public class FrontEndTesting {
 			messageReceived = false;
 		}
 		assertTrue(messageReceived);
+	}
+
+	@Test
+	public void testXSSInjection1() throws Exception{
+		System.out.println("Starting Test " + new Object() {
+		}.getClass().getEnclosingMethod().getName());
+		Boolean noAlertDialog;
+		// Set XSS to be sent
+		String testXSSScript = "<script>alert('XML Injection Successful')</script>";
+		// Use either by index or visible text
+		dropdown.selectByIndex(0);
+		// fill up name boxes
+		firstName.sendKeys(testXSSScript);
+		secondName.sendKeys(testXSSScript);
+		email.sendKeys("testing@test.com");
+		// submit
+		submit.click();
+		// Check if the alert dialog pops up
+		try{
+			driver.switchTo().alert();
+			noAlertDialog = false;
+		} catch (NoAlertPresentException e){
+			noAlertDialog = true;
+		}
+		assertTrue(noAlertDialog);
+	}
+
+	@Test
+	public void testXSSInjection2() throws Exception{
+		System.out.println("Starting Test " + new Object() {
+		}.getClass().getEnclosingMethod().getName());
+		Boolean noAlertDialog;
+		// Set XSS to be sent
+		String testXSSScript = "<script>alert('XML Injection Successful')</script>";
+		// Use either by index or visible text
+		dropdown.selectByIndex(0);
+		// fill up name boxes
+		firstName.sendKeys("UserFirstName");
+		secondName.sendKeys("UserLastName");
+		email.sendKeys("testing@test.com");
+		// submit
+		submit.click();
+		// Send button
+		WebElement send = wait.until(ExpectedConditions.visibilityOfElementLocated(
+				By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]")));
+		WebElement usermsg = driver.findElement(By.id("usermsg"));
+		usermsg.sendKeys(testXSSScript);
+		send.click();
+		// Check if the alert dialog pops up
+		try{
+			driver.switchTo().alert();
+			noAlertDialog = false;
+		} catch (NoAlertPresentException e){
+			noAlertDialog = true;
+		}
+		assertTrue(noAlertDialog);
 	}
 }

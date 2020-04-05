@@ -9,23 +9,23 @@ import org.openqa.selenium.chrome.ChromeDriver;
 
 public class CodeTestFile {
     public static void main(String[] args) {
-        // WebDriver webDriver = new ChromeDriver();
-        // ArrayList<String> tabs;
-        // webDriver.get("https://www.google.com");
-        // ((JavascriptExecutor) webDriver).executeScript("window.open('about:blank','_blank');");
-        // tabs = new ArrayList<String>(webDriver.getWindowHandles());
-        // webDriver.switchTo().window(tabs.get(tabs.size() - 1));
-        // webDriver.get("https://www.facebook.com");
-        // ((JavascriptExecutor) webDriver).executeScript("window.open('about:blank','_blank');");
-        // tabs = new ArrayList<String>(webDriver.getWindowHandles());
-        // webDriver.switchTo().window(tabs.get(tabs.size() - 1));
-        // webDriver.get("https://www.youtube.com");
-        // webDriver.switchTo().window(tabs.get(1));
-        // webDriver.close();
-        // tabs = new ArrayList<String>(webDriver.getWindowHandles());
-        // webDriver.switchTo().window(tabs.get(tabs.size() - 1));
-        // System.out.println(webDriver.getCurrentUrl());
-        // webDriver.quit();
+//         WebDriver webDriver = new ChromeDriver();
+//         ArrayList<String> tabs;
+//         webDriver.get("https://www.google.com");
+//         ((JavascriptExecutor) webDriver).executeScript("window.open('about:blank','_blank');");
+//         tabs = new ArrayList<String>(webDriver.getWindowHandles());
+//         webDriver.switchTo().window(tabs.get(tabs.size() - 1));
+//         webDriver.get("https://www.facebook.com");
+//         ((JavascriptExecutor) webDriver).executeScript("window.open('about:blank','_blank');");
+//         tabs = new ArrayList<String>(webDriver.getWindowHandles());
+//         webDriver.switchTo().window(tabs.get(tabs.size() - 1));
+//         webDriver.get("https://www.youtube.com");
+//         webDriver.switchTo().window(tabs.get(1));
+//         webDriver.close();
+//         tabs = new ArrayList<String>(webDriver.getWindowHandles());
+//         webDriver.switchTo().window(tabs.get(tabs.size() - 1));
+//         System.out.println(webDriver.getCurrentUrl());
+//         webDriver.quit();
     }
 
 }
