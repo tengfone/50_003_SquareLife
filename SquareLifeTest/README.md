@@ -30,6 +30,9 @@ All tests are asserted true by default.
 | 18  | testUserReceived2         | Message - "!@#\$%^&\*()\_+1234567890-=,./;[]\\" |      True      |     True     |
 | 19  | testUserReceived3         | Message - " "                                   |      True      |     True     |
 | 20  | testUserReceived4         | Message <sup>**2**</sup> - "d\*1025"            |     False      |    False     |
+|     | **XSS Injection Testing** |						    |     	     |		    |
+| 21  | testXSSInjection1	  | Send a script alert to FirstName LastName input |      True      |     True     |
+| 22  | testXSSInjection2	  | Send a script alert to send message input	    |      True      |     True     |
 
 <sup>1</sup> _If input field is not mentioned, it is taken be valid._
 

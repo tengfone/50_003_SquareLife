@@ -10,8 +10,9 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class AgentTesting {
-  final static String AGENT1_USERNAME = "agent1@company.com";
-  final static String AGENT1_PASSWORD = "Password_123";
+  // TF: agent1@sutd20.com Password1!    DH: agent1@company.com   Password_123
+  final static String AGENT1_USERNAME = "agent1@sutd20.com";
+  final static String AGENT1_PASSWORD = "Password1!";
   String customerFirstName;
   String customerLastName;
   String customerName;
