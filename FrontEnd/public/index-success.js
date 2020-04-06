@@ -328,10 +328,18 @@ function initUI(conversation) {
 
             //COMMANDS
             if (message.data == "//endchat") {
+                //send data to routing engine that chat is closed so that new user can be reassigned to the agent
                 let message2 = "The chat session will now be closed.";
 
                 //send data to routing engine that chat is closed so that new user can be reassigned to the agent
-                i
+                await closeSupportRequest();
+                socket.close();
+                addMessage(
+                    contact.firstname + " " + contact.lastname,
+                    message2,
+                    "left"
+                );
+                disableInputFields();
             } else if (message.data == "//reassignagent") {
                 //pull&store data on which agent
                 /*
