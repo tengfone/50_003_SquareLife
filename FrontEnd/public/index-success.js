@@ -9,7 +9,7 @@ let associatedConversation = null;
 let socket, agentUUID, clientUUID;
 let userDLChatLog = ["Welcome To SquareLife Chat Log"];
 let closeBoolean = false;
-const timeoutinSeconds = 60 * 10;
+const timeoutinSeconds = 5 * 60;
 
 document.addEventListener("DOMContentLoaded", async function (event) {
     await loadRainbowSDK();
@@ -299,19 +299,18 @@ function initUI(conversation) {
     assignInputListeners();
 
     // todo: solve for user ENTERING their custom URL
-    window.onunload = async function () {
-        if (closeBoolean) {
-            return false;
-        } else {
-            endChat();
-            try {
-                await closeSupportRequest();
-            } catch (err){
-
-            }
-            socket.close();
-        }
-    }
+    // window.onbeforeunload = async function () {
+    //     if (closeBoolean) {
+    //         return false;
+    //     } else {
+    //         endChat();
+    //         try {
+    //             await closeSupportRequest();
+    //         } catch (err){
+    //         }
+    //         socket.close();
+    //     }
+    // }
 
     // window.onunload = async () => {
     //     try {
@@ -580,3 +579,24 @@ function voiceChat() {
     }
 
 }
+
+const user_stays = async function user_stays() {
+    endChat();
+    try {
+        await closeSupportRequest();
+    } catch (err) {
+    }
+    socket.close();
+    window.location.pathname = '/'
+}
+
+
+window.addEventListener('beforeunload', async function onBeforeUnload(e) {
+    setTimeout(user_stays, 500);
+    endChat();
+    try {
+        await closeSupportRequest();
+    } catch (err) {
+    }
+    socket.close();
+});
