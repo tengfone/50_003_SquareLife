@@ -84,12 +84,12 @@ function waitForAgent(uuid = clientUUID) {
 					resolve([
 						response.payload.assigned_agent.rainbowID,
 						response.payload.assigned_agent.uuid,
-						document.getElementById("waitingAgent").style.display = 'none'
 
 					]);
 				} else {
 					document.getElementById("waitingAgent").style.display = '',
-
+					document.getElementById("waitingAgent").innerHTML = "All our agents are currently busy. You are placed in a queue and an agent will be assigned to you shortly. Please wait in this chat for your turn.";
+					
 					resolve(waitForAgent());
 				}
 			},
@@ -420,6 +420,9 @@ function initUI(conversation) {
 	exitbtn.disabled = false;
 	exitbtn.addEventListener("click", handleError(exitBtnSocket), false);
 
+	document.getElementById("waitingAgent").style.display = 'none'
+
+	
 	async function exitBtnSocket() {
 		let confirmed = window.confirm("Exit To Main Menu?");
 		if (confirmed) {
