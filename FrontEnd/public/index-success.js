@@ -84,8 +84,12 @@ function waitForAgent(uuid = clientUUID) {
 					resolve([
 						response.payload.assigned_agent.rainbowID,
 						response.payload.assigned_agent.uuid,
+						document.getElementById("waitingAgent").style.display = 'none'
+
 					]);
 				} else {
+					document.getElementById("waitingAgent").style.display = '',
+
 					resolve(waitForAgent());
 				}
 			},
