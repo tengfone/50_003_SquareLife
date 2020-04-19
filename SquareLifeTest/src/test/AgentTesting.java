@@ -10,7 +10,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class AgentTesting {
-  // TF: agent1@sutd20.com Password1!    DH: agent1@company.com   Password_123
+  // TF: agent1@sutd20.com Password1! DH: agent1@company.com Password_123
   final static String AGENT1_USERNAME = "agent1@sutd20.com";
   final static String AGENT1_PASSWORD = "Password1!";
   String customerFirstName;
@@ -33,7 +33,7 @@ public class AgentTesting {
     this.customerSelected = false;
   }
 
-  private void openNewTab() {
+  public void openNewTab() {
     ((JavascriptExecutor) driver).executeScript("window.open('about:blank','_blank');");
     tabs = new ArrayList<String>(driver.getWindowHandles());
     driver.switchTo().window(tabs.get(tabs.size() - 1));

@@ -11,17 +11,29 @@ import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.openqa.selenium.TimeoutException;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.*;
 
 public class FrontEndTesting {
 	WebDriver driver;
-	WebElement firstName, secondName, email, submit;
+	WebElement firstName, secondName, email, submit, exit;
 	Select dropdown;
 	AgentTesting agentTesting;
 	WebDriverWait wait;
 	final static String WEBSITEURL = "https://localhost:3005/";
+
+	void fillingUpDetails(int n) {
+		// Use either by index or visible text
+		dropdown.selectByIndex(0);
+		// fill up name boxes
+		firstName.sendKeys("User" + n + "FirstName");
+		secondName.sendKeys("User" + n + "LastName");
+		email.sendKeys("testing" + n + "@test.com");
+		// submit
+		submit.click();
+	}
 
 	@Before
 	public void initDriver() throws Exception {
@@ -473,7 +485,7 @@ public class FrontEndTesting {
 	}
 
 	@Test
-	public void testXSSInjection1() throws Exception{
+	public void testXSSInjection1() throws Exception {
 		System.out.println("Starting Test " + new Object() {
 		}.getClass().getEnclosingMethod().getName());
 		Boolean noAlertDialog;
@@ -488,17 +500,17 @@ public class FrontEndTesting {
 		// submit
 		submit.click();
 		// Check if the alert dialog pops up
-		try{
+		try {
 			driver.switchTo().alert();
 			noAlertDialog = false;
-		} catch (NoAlertPresentException e){
+		} catch (NoAlertPresentException e) {
 			noAlertDialog = true;
 		}
 		assertTrue(noAlertDialog);
 	}
 
 	@Test
-	public void testXSSInjection2() throws Exception{
+	public void testXSSInjection2() throws Exception {
 		System.out.println("Starting Test " + new Object() {
 		}.getClass().getEnclosingMethod().getName());
 		Boolean noAlertDialog;
@@ -519,12 +531,77 @@ public class FrontEndTesting {
 		usermsg.sendKeys(testXSSScript);
 		send.click();
 		// Check if the alert dialog pops up
-		try{
+		try {
 			driver.switchTo().alert();
 			noAlertDialog = false;
-		} catch (NoAlertPresentException e){
+		} catch (NoAlertPresentException e) {
 			noAlertDialog = true;
 		}
 		assertTrue(noAlertDialog);
+	}
+
+	/*
+	 * *PRE-REQUISITE* Accepts First Request from DropDown Task with Pre-set 3 Available Agents in
+	 * Queue.
+	 */
+	@Test
+	public void testQueueSystem() throws Exception {
+		System.out.println("Starting Test " + new Object() {
+		}.getClass().getEnclosingMethod().getName());
+		boolean sendEnabled = false;
+		int numOfPreAssignAgents = 3;
+		fillingUpDetails(1);
+		// Send button
+		WebElement send = wait.until(ExpectedConditions.visibilityOfElementLocated(
+				By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]")));
+		sendEnabled = send.isEnabled();
+		if (sendEnabled) {
+			for (int i = 0; i < numOfPreAssignAgents; i++) {
+				agentTesting.openNewTab();
+				driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+				wait = new WebDriverWait(driver, 20);
+				driver.get(WEBSITEURL);
+				firstName = driver.findElement(By.id("firstname"));
+				secondName = driver.findElement(By.id("lastname"));
+				email = driver.findElement(By.id("customer_email"));
+				dropdown = new Select(driver.findElement(By.id("customer_option")));
+				submit = driver.findElement(By.className("btn-primary"));
+				fillingUpDetails(i + 2);
+				if (i == numOfPreAssignAgents - 1) {
+					break;
+				} else {
+					// Send button
+					WebElement sendBtn = wait.until(ExpectedConditions.visibilityOfElementLocated(
+							By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]")));
+					sendEnabled = sendBtn.isEnabled();
+				} ;
+				if (sendEnabled)
+					continue;
+				else
+					assert false;
+			}
+		} else
+			assert false;
+		ArrayList<String> tabs = new ArrayList<String>(driver.getWindowHandles());
+		driver.switchTo().window(tabs.get(0));
+		exit = driver.findElement(By.className("btn-outline-danger"));
+		exit.click();
+		driver.switchTo().alert().accept();
+		Thread.sleep(1000);
+		driver.switchTo().alert().accept();
+		Thread.sleep(1000);
+		driver.switchTo().window(tabs.get(3));
+		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+		WebElement sendBtn = wait.until(ExpectedConditions.visibilityOfElementLocated(
+				By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]")));
+		boolean sendEnabled2 = sendBtn.isEnabled();
+		assertTrue(sendEnabled2);
+		driver.close();
+		driver.switchTo().window(tabs.get(2));
+		driver.close();
+		driver.switchTo().window(tabs.get(1));
+		driver.close();
+		driver.switchTo().window(tabs.get(0));
+		driver.close();
 	}
 }
