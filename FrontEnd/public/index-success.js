@@ -63,8 +63,28 @@ function sendSupportRequest() {
         console.log(response);
         if (response.result == "success") {
           resolve(response.payload.uuid);
+        } else if (response.result == "pending") {
+          resolve(
+            (() => {
+              return new Promise((resolve, reject) => {
+                socket.addEventListener(
+                  "message",
+                  (event) => {
+                    let response = JSON.parse(event.data);
+                    console.log(response);
+                    if (response.result == "success") {
+                      resolve(response.payload.uuid);
+                    } else {
+                      resolve(sendSupportRequest());
+                    }
+                  },
+                  { once: true }
+                );
+              });
+            })()
+          );
         } else {
-          reject(response.payload);
+          resolve(sendSupportRequest());
         }
       },
       { once: true }
@@ -85,11 +105,37 @@ function waitForAgent(uuid = clientUUID) {
             response.payload.assigned_agent.rainbowID,
             response.payload.assigned_agent.uuid,
           ]);
-        } else {
-          (document.getElementById("waitingAgent").style.display = ""),
-            (document.getElementById("waitingAgent").innerHTML =
-              "All our agents are currently busy. You are placed in a queue and an agent will be assigned to you shortly. Please wait in this chat for your turn.");
+        } else if (response.result == "pending") {
+          document.getElementById("waitingAgent").style.display = "";
+          document.getElementById("waitingAgent").innerHTML =
+            "All our agents are currently busy. You are placed in a queue and an agent will be assigned to you shortly. <br/> Please wait in this chat for your turn.";
 
+          resolve(
+            (() => {
+              return new Promise((resolve, reject) => {
+                socket.addEventListener(
+                  "message",
+                  (event) => {
+                    let response = JSON.parse(event.data);
+                    console.log(response);
+                    if (response.result == "success") {
+                      resolve([
+                        response.payload.assigned_agent.rainbowID,
+                        response.payload.assigned_agent.uuid,
+                      ]);
+                    } else {
+                      resolve(waitForAgent());
+                    }
+                  },
+                  { once: true }
+                );
+              });
+            })()
+          );
+        } else {
+          document.getElementById("waitingAgent").style.display = "";
+          document.getElementById("waitingAgent").innerHTML =
+            "All our agents are currently busy. You are placed in a queue and an agent will be assigned to you shortly. Please wait in this chat for your turn.";
           resolve(waitForAgent());
         }
       },
@@ -174,6 +220,26 @@ function closeSupportRequest() {
         console.log(response);
         if (response.result == "success") {
           resolve();
+        } else if (response.result == "pending") {
+          resolve(
+            (() => {
+              return new Promise((resolve, reject) => {
+                socket.addEventListener(
+                  "message",
+                  (event) => {
+                    let response = JSON.parse(event.data);
+                    console.log(response);
+                    if (response.result == "success") {
+                      resolve();
+                    } else {
+                      reject();
+                    }
+                  },
+                  { once: true }
+                );
+              });
+            })()
+          );
         } else {
           reject(response.payload);
         }
@@ -195,6 +261,26 @@ function changeSupportRequestType(type) {
         console.log(response);
         if (response.result == "success") {
           resolve();
+        } else if (response.result == "pending") {
+          resolve(
+            (() => {
+              return new Promise((resolve, reject) => {
+                socket.addEventListener(
+                  "message",
+                  (event) => {
+                    let response = JSON.parse(event.data);
+                    console.log(response);
+                    if (response.result == "success") {
+                      resolve();
+                    } else {
+                      reject(response.payload);
+                    }
+                  },
+                  { once: true }
+                );
+              });
+            })()
+          );
         } else {
           reject(response.payload);
         }
@@ -214,6 +300,26 @@ function dropSupportRequest() {
         console.log(response);
         if (response.result == "success") {
           resolve();
+        } else if (response.result == "pending") {
+          resolve(
+            (() => {
+              return new Promise((resolve, reject) => {
+                socket.addEventListener(
+                  "message",
+                  (event) => {
+                    let response = JSON.parse(event.data);
+                    console.log(response);
+                    if (response.result == "success") {
+                      resolve();
+                    } else {
+                      reject(response.payload);
+                    }
+                  },
+                  { once: true }
+                );
+              });
+            })()
+          );
         } else {
           reject(response.payload);
         }
@@ -349,15 +455,17 @@ function initUI(conversation) {
           "left"
         );
         disableInputFields();
-      } else if (message.data == "//reassignagent") {
-        //pull&store data on which agent
-        /*
-                    # TODO
-                    Need to include which type of request in message.data E.g. //reassignagent_{type}
-                    to facilitate change of request type.
-                */
+      } else if (message.data.contains("//reassignagent")) {
+        let type = message.data[message.data.length - 1];
+        if (!Number.isInteger(type)) {
+          rainbowSDK.im.sendMessageToConversation(
+            associatedConversation,
+            "Please send a type. Eg. //reassignagent_1"
+          );
+          return;
+        }
         //send data to routing engine
-        await reassignAgent(2); // Type:2 is currently used as placeholder for the above TODO
+        await reassignAgent(type);
 
         let message2 = "We will now be reassigning another agent to you.";
         addMessage(
@@ -601,3 +709,21 @@ function voiceChat() {
     console.log("WebRTC ERROR: ", errorSDK);
   }
 }
+
+const user_stays = async function () {
+  endChat();
+  try {
+    await closeSupportRequest();
+  } catch (err) {}
+  socket.close();
+  window.location.pathname = "/";
+};
+
+window.addEventListener("beforeunload", async function onBeforeUnload(e) {
+  setTimeout(user_stays, 500);
+  endChat();
+  try {
+    await closeSupportRequest();
+  } catch (err) {}
+  socket.close();
+});
