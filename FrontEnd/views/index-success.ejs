@@ -1,157 +1,152 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-	<title>Chat - Customer Module</title>
-	<meta charset="utf-8" />
-	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<script src="//cdnjs.cloudflare.com/ajax/libs/es5-shim/4.5.9/es5-shim.min.js"></script>
-	<script src="//cdnjs.cloudflare.com/ajax/libs/es6-promise/4.0.5/es6-promise.min.js"></script>
-	<script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
-	<script src="//cdn.jsdelivr.net/momentjs/2.15.1/moment-with-locales.min.js"></script>
-	<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.5/angular.min.js"></script>
-	<script src="/public/vendors-sdk.min.js"></script>
-	<script type="module" src="/public/index-success.js"></script>
+  <head>
+    <title>Chat - Customer Module</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="//cdnjs.cloudflare.com/ajax/libs/es5-shim/4.5.9/es5-shim.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/es6-promise/4.0.5/es6-promise.min.js"></script>
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="//cdn.jsdelivr.net/momentjs/2.15.1/moment-with-locales.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.5/angular.min.js"></script>
+    <script src="/public/vendors-sdk.min.js"></script>
+    <script type="module" src="/public/index-success.js"></script>
 
-	<link
-			rel="stylesheet"
-			href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
-			integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
-			crossorigin="anonymous"
-	/>
-	<script
-			src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
-			integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
-			crossorigin="anonymous"
-	></script>
-	<script
-			src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
-			integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
-			crossorigin="anonymous"
-	></script>
-</head>
-<style>
-	#chatlog {
-		overflow: auto;
-		height: 45vh;
-	}
-</style>
-<body>
-<video id="minivideo" autoplay muted></video>
-<video id="largevideo" autoplay></video>
-<video id="globalVideoTag" autoplay style="display:none;"></video>
-<audio id="globalAudioTag" autoplay style="display:none;"></audio>
-<div id="wrapper">
-	<div id="menu" class="py-1 text-center">
-		<h1 class="welcome">Welcome <%= firstName %> <%= lastName %></h1>
-		<h6 class = "container" id="waitingAgent" >We are assigning a suitable agent to assist you. Please hold on. </h6>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+      integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+      integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+      integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <style>
+    #chatlog {
+      overflow: auto;
+      height: 45vh;
+    }
+  </style>
+  <body>
+    <video id="minivideo" autoplay muted></video>
+    <video id="largevideo" autoplay></video>
+    <video id="globalVideoTag" autoplay style="display: none;"></video>
+    <audio id="globalAudioTag" autoplay style="display: none;"></audio>
+    <div id="wrapper">
+      <div id="menu" class="py-1 text-center">
+        <h1 class="welcome">Welcome <%= firstName %> <%= lastName %></h1>
+        <h6 class="container" id="waitingAgent">
+          We are assigning a suitable agent to assist you. Please hold on.
+        </h6>
 
-		<br />
-		<a
-				id="exit"
-				role="button"
-				class="btn btn-outline-danger"
-		>Exit Chat</a
-		>
-		<div style="clear:both"></div>
-	</div>
-	<div class="container mb-3 " id="chatlog"></div>
-	<div class="container">
-		<div class="input-group">
-			<input
-					id="usermsg"
-					name="usermsg"
-					type="text"
-					class="form-control input-sm shadow-none"
-					placeholder="Type your message here..."
-					maxlength="1024"
-					disabled
-			/>
-			<span class="input-group-btn">
-						<button
-								class="btn btn-primary px-3"
-								id="submitmsg"
-								name="submitmsg"
-								disabled
-						>
-							<span
-									class="spinner-border spinner-border-sm"
-									role="status"
-									aria-hidden="true"
-									id="loadanimation"
-							></span>
-							Loading...
-						</button>
-				<!-- Trigger the modal with a button -->
-						<button
-								type="button"
-								data-toggle="modal"
-								data-target="#myModal"
-								class="btn btn-primary px-1"
-								id="voiceChat"
-								name="voiceChat"
-								data-backdrop="static"
-								data-keyboard="false"
-								disabled
-						>
-							<span
-									class="spinner-border spinner-border-sm"
-									role="status"
-									aria-hidden="true"
-									id="loadanimation"
-							></span>
-							Loading...
-						</button>
+        <br />
+        <a id="exit" role="button" class="btn btn-outline-danger">Exit Chat</a>
+        <div style="clear: both;"></div>
+      </div>
+      <div class="container mb-3" id="chatlog"></div>
+      <div class="container">
+        <div class="input-group">
+          <input
+            id="usermsg"
+            name="usermsg"
+            type="text"
+            class="form-control input-sm shadow-none"
+            placeholder="Type your message here..."
+            maxlength="1024"
+            disabled
+          />
+          <span class="input-group-btn">
+            <button
+              class="btn btn-primary px-3"
+              id="submitmsg"
+              name="submitmsg"
+              disabled
+            >
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+                id="loadanimation"
+              ></span>
+              Loading...
+            </button>
+            <!-- Trigger the modal with a button -->
+            <button
+              type="button"
+              data-toggle="modal"
+              data-target="#myModal"
+              class="btn btn-primary px-1"
+              id="voiceChat"
+              name="voiceChat"
+              data-backdrop="static"
+              data-keyboard="false"
+              disabled
+            >
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+                id="loadanimation"
+              ></span>
+              Loading...
+            </button>
 
-						<button
-								class="btn btn-success px-1"
-								id="dlchatlog"
-								name="dlchatlog"
-								disabled
-						>
-							<span
-									class="spinner-border spinner-border-sm"
-									role="status"
-									aria-hidden="true"
-									id="loadanimation"
-							></span>
-							Loading...
-						</button>
-
-
-					</span>
-			<!-- Modal -->
-			<div class="modal fade" id="myModal" role="dialog">
-				<div class="modal-dialog">
-					<!-- Modal content-->
-					<div class="modal-content">
-						<div class="modal-header">
-							<h4 class="modal-title">Voice Support</h4>
-						</div>
-						<div class="modal-body">
-							<p id="p1">Please Wait For Agent To Pick Up...</p>
-						</div>
-						<div class="modal-footer">
-							<button
-									type="button"
-									id="close_btn"
-									class="btn btn-danger"
-									data-dismiss="modal"
-							>
-								End Call
-							</button>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-</div>
-<script>
-	let firstName = "<%= firstName %>";
-	let lastName = "<%= lastName %>";
-	let customer_option = "<%= customer_option %>";
-	let customer_email = "<%= customer_email %>";
-</script>
-</body>
+            <button
+              class="btn btn-success px-1"
+              id="dlchatlog"
+              name="dlchatlog"
+              disabled
+            >
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+                id="loadanimation"
+              ></span>
+              Loading...
+            </button>
+          </span>
+          <!-- Modal -->
+          <div class="modal fade" id="myModal" role="dialog">
+            <div class="modal-dialog">
+              <!-- Modal content-->
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h4 class="modal-title">Voice Support</h4>
+                </div>
+                <div class="modal-body">
+                  <p id="p1">Please Wait For Agent To Pick Up...</p>
+                </div>
+                <div class="modal-footer">
+                  <button
+                    type="button"
+                    id="close_btn"
+                    class="btn btn-danger"
+                    data-dismiss="modal"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      let firstName = "<%= firstName %>";
+      let lastName = "<%= lastName %>";
+      let customer_option = "<%= customer_option %>";
+      let customer_email = "<%= customer_email %>";
+    </script>
+  </body>
 </html>

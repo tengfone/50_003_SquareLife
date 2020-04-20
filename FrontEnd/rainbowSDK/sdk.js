@@ -78,6 +78,7 @@ class SDK {
         let rainbowID = contact.id;
         let presence = contact.presence;
         console.log(rainbowID, presence);
+        if (presence == "away") return;
         //
         this.socket.send(
           `update_agent_availability {rainbow_id:"${rainbowID}", available:${

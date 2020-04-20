@@ -451,6 +451,10 @@ function initUI(conversation) {
       if (message.data == "//endchat") {
         //send data to routing engine that chat is closed so that new user can be reassigned to the agent
         let message2 = "The chat session will now be closed.";
+        rainbowSDK.im.sendMessageToConversation(
+          associatedConversation,
+          "Closing chat session"
+        );
 
         //send data to routing engine that chat is closed so that new user can be reassigned to the agent
         await closeSupportRequest();
@@ -479,6 +483,10 @@ function initUI(conversation) {
           "left"
         );
         document.getElementById("waitingAgent").style.display = "initital";
+        rainbowSDK.im.sendMessageToConversation(
+          associatedConversation,
+          "Reassigning support request"
+        );
 
         await reassignAgent(Number(type));
         reinitialiseChat();
@@ -596,6 +604,7 @@ function timeOut() {
         window.alert("You have been logged out due to inactivity.");
         await closeSupportRequest();
         socket.close();
+        toggleInputFields(true);
         window.location.pathname = "/";
       }
     }),
@@ -700,17 +709,31 @@ function voiceChat() {
 
     function terminateCall() {
       let res = rainbowSDK.webRTC.release(call);
+      elementRemoveListeners(document.getElementById("voiceChat"));
+      document.getElementById("voiceChat").innerText = "Voice Chat";
+      document.getElementById("voiceChat").className = "btn btn-primary px-1";
+      document.getElementById("voiceChat").addEventListener("click", voiceChat);
     }
 
     if (call.status.value == "active") {
       document.getElementById("p1").innerHTML = "Connected";
-      close_btn.addEventListener("click", terminateCall);
+      $("#myModal").modal("toggle");
+      elementRemoveListeners(document.getElementById("voiceChat"));
+      document.getElementById("voiceChat").innerText = "End Call";
+      document.getElementById("voiceChat").className = "btn btn-danger px-1";
+      document
+        .getElementById("voiceChat")
+        .addEventListener("click", terminateCall);
+      // close_btn.addEventListener("click", terminateCall);
 
       console.log("Connected");
     } else if (event.detail.status.value == "Unknown") {
       document.getElementById("p1").innerHTML = "Call Terminated";
     } else if (event.detail.status.value == "dialing") {
-      close_btn.addEventListener("click", terminateCall);
+      elementRemoveListeners(document.getElementById("close_btn"));
+      document
+        .getElementById("close_btn")
+        .addEventListener("click", terminateCall);
     }
   }
 
