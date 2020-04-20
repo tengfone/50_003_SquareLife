@@ -60,7 +60,6 @@ class RoutingEngineSocket {
         })
         .once("error", () => {
           console.log("Error");
-          resolve(this.start());
         });
     });
   }

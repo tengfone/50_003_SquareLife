@@ -102,7 +102,7 @@ function waitForAgent(uuid = clientUUID) {
         console.log(response);
         if (response.result == "success") {
           resolve([
-            response.payload.assigned_agent.rainbowID,
+            response.payload.assigned_agent.rainbow_id,
             response.payload.assigned_agent.uuid,
           ]);
         } else if (response.result == "pending") {
@@ -120,7 +120,7 @@ function waitForAgent(uuid = clientUUID) {
                     console.log(response);
                     if (response.result == "success") {
                       resolve([
-                        response.payload.assigned_agent.rainbowID,
+                        response.payload.assigned_agent.rainbow_id,
                         response.payload.assigned_agent.uuid,
                       ]);
                     } else {
@@ -292,7 +292,7 @@ function changeSupportRequestType(type) {
 
 function dropSupportRequest() {
   return new Promise((resolve, reject) => {
-    socket.send(`drop_support_request {uuid:"${agentUUID}"}`);
+    socket.send(`drop_support_request {rainbow_id:"${agentId}"}`);
     socket.addEventListener(
       "message",
       (event) => {
@@ -407,16 +407,22 @@ function assignInputListeners() {
   });
 }
 
-function disableInputFields() {
-  document.getElementById("dlchatlog").disabled = true;
-  document.getElementById("dlchatlog").style.cursor = "default";
-  document.getElementById("voiceChat").disabled = true;
-  document.getElementById("voiceChat").style.cursor = "default";
-  document.getElementById("submitmsg").disabled = true;
-  document.getElementById("submitmsg").style.cursor = "default";
-  document.getElementById("usermsg").disabled = true;
-  document.getElementById("exit").disabled = true;
-  document.getElementById("exit").style.cursor = "default";
+function toggleInputFields(bool) {
+  // document.getElementById("dlchatlog").disabled = bool;
+  // document.getElementById("dlchatlog").style.cursor = bool
+  //   ? "default"
+  //   : "pointer";
+  document.getElementById("voiceChat").disabled = bool;
+  document.getElementById("voiceChat").style.cursor = bool
+    ? "default"
+    : "pointer";
+  document.getElementById("submitmsg").disabled = bool;
+  document.getElementById("submitmsg").style.cursor = bool
+    ? "default"
+    : "pointer";
+  document.getElementById("usermsg").disabled = bool;
+  document.getElementById("exit").disabled = bool;
+  document.getElementById("exit").style.cursor = bool ? "default" : "pointer";
 }
 
 function initUI(conversation) {
@@ -454,10 +460,10 @@ function initUI(conversation) {
           message2,
           "left"
         );
-        disableInputFields();
-      } else if (message.data.contains("//reassignagent")) {
+        toggleInputFields(true);
+      } else if (message.data.includes("//reassignagent")) {
         let type = message.data[message.data.length - 1];
-        if (!Number.isInteger(type)) {
+        if (!Number.isInteger(Number(type))) {
           rainbowSDK.im.sendMessageToConversation(
             associatedConversation,
             "Please send a type. Eg. //reassignagent_1"
@@ -465,15 +471,19 @@ function initUI(conversation) {
           return;
         }
         //send data to routing engine
-        await reassignAgent(type);
-
+        toggleInputFields(true);
         let message2 = "We will now be reassigning another agent to you.";
         addMessage(
           contact.firstname + " " + contact.lastname,
           message2,
           "left"
         );
+        document.getElementById("waitingAgent").style.display = "initital";
+
+        await reassignAgent(Number(type));
         reinitialiseChat();
+        toggleInputFields(false);
+        document.getElementById("waitingAgent").style.display = "none";
       } else {
         console.log(message);
         let d = new Date().toLocaleString();

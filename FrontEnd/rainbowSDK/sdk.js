@@ -2,6 +2,8 @@ const RainbowSDK = require("rainbow-node-sdk");
 const options = require("./config");
 const RoutingEngineSocket = require("../Websocket/routingEngineSocket");
 const agentIds = require("./agentIds");
+const admin = require("./secrets").admin;
+const supportRequestTypes = require("./secrets").types;
 
 class SDK {
   constructor() {
@@ -24,6 +26,7 @@ class SDK {
     await this.initAgents();
     this.checkQueue();
     this.checkUnavailableAgents();
+    this.setBotListeners();
     return "SDK Started";
   }
 
@@ -66,18 +69,45 @@ class SDK {
     this.rainbowSDK.events.on("rainbow_onfailed", () => {
       this.forceRestart().then((data) => console.log(data));
     });
+  }
 
+  setBotListeners() {
     this.rainbowSDK.events.on(
       "rainbow_oncontactpresencechanged",
       async (contact) => {
         let rainbowID = contact.id;
         let presence = contact.presence;
         console.log(rainbowID, presence);
-        await this.socket.send(
-          `update_agent_availability {uuid:"${rainbowID}", available:${
+        //
+        this.socket.send(
+          `update_agent_availability {rainbow_id:"${rainbowID}", available:${
             presence == "online"
           }}`
         );
+        await this.socket.waitCounter();
+        let values = await Promise.all(Object.values(this.socket.buffer));
+        for (let i = 0; i < values.length; i++) {
+          if (values[i].method == "update_agent_availability") {
+            let ticket = await this.socket.popResult(values[i].ticket_number);
+            if (ticket.result == "success") {
+              let available = ticket.payload.available;
+              if (available) {
+                let pushItem = this.removeAgentFromUnavailable(rainbowID);
+                if (pushItem) {
+                  for (let skill in pushItem.skills) {
+                    this.availableAgents[skill].push(pushItem);
+                  }
+                  console.log("Available agents: ", this.availableAgents);
+                }
+              } else {
+                let pushItem = this.removeAgentFromAvailable(rainbowID);
+                if (pushItem) this.unavailableAgents.push(pushItem);
+                console.log("Unavailable agents: ", this.unavailableAgents);
+              }
+            }
+            break;
+          }
+        }
       }
     );
 
@@ -94,14 +124,14 @@ class SDK {
 
         switch (message.content) {
           case "//endchat":
-            await this.socket.send(
-              `close_support_request {uuid:"${rainbowID}"}`
+            this.socket.send(
+              `drop_support_request {rainbow_id:"${rainbowID}"}`
             );
             break;
 
           case "//reassignagent":
-            await this.socket.send(
-              `drop_support_request {uuid:"${rainbowID}"}`
+            this.socket.send(
+              `drop_support_request {rainbow_id:"${rainbowID}"}`
             );
             break;
         }
@@ -109,46 +139,80 @@ class SDK {
     });
   }
 
+  removeAgentFromUnavailable(rainbow_id) {
+    let result = false;
+    for (let i = 0; i < this.unavailableAgents.length; i++) {
+      if (this.unavailableAgents[i].rainbow_id == rainbow_id) {
+        let agentTemp = this.unavailableAgents[i];
+        this.unavailableAgents.splice(i, 1);
+        result = agentTemp;
+        break;
+      }
+    }
+    return result;
+  }
+
+  removeAgentFromAvailable(rainbow_id) {
+    let agent = agentIds[rainbow_id];
+    let result = false;
+    for (let skill in agent.skills) {
+      for (let i = 0; i < this.availableAgents[skill].length; i++) {
+        if (rainbow_id == this.availableAgents[skill][i].rainbow_id) {
+          let agentTemp = this.availableAgents[skill][i];
+          this.availableAgents[skill].splice(i, 1);
+          result = agentTemp;
+          break;
+        }
+      }
+    }
+    return result;
+  }
+
   async initAgents() {
     for (let i in agentIds) {
-      let rainbowID = agentIds[i].id;
+      let rainbowID = agentIds[i].rainbow_id;
       let skills = JSON.stringify(agentIds[i].skills);
-      this.socket.send(`new_agent {skills:${skills}}`);
+      this.socket.send(
+        `new_agent {rainbow_id: ${rainbowID}, skills:${skills}, admin_uuid: ${admin.uuid}}`
+      );
     }
+    // await this.socket.waitCounter();
+    // let values = await Promise.all(Object.values(this.socket.buffer));
+    // this.socket.clearBuffer();
+    // values.forEach((item, index) => {
+    //   // this.availableAgents[index].uuid = item.payload.uuid;
+    //   this.socket.send(
+    //     `update_agent_availability {rainbow_id:${item.payload.rainbow_id}, available:true}`
+    //   );
+    // });
     await this.socket.waitCounter();
     let values = await Promise.all(Object.values(this.socket.buffer));
     this.socket.clearBuffer();
     values.forEach((item, index) => {
-      this.availableAgents[index].uuid = item.payload.uuid;
-      this.socket.send(
-        `update_agent_availability {uuid:${item.payload.uuid}, available:true}`
-      );
-    });
-    await this.socket.waitCounter();
-    values = await Promise.all(Object.values(this.socket.buffer));
-    this.socket.clearBuffer();
-    values.forEach((item, index) => {
-      this.availableAgents[index].available = item.payload.available;
       this.availableAgents[index].requestCount = 0;
+      this.unavailableAgents.push(this.availableAgents[index]);
     });
     let temp = {};
-    for (let i = 0; i < this.availableAgents.length; i++) {
-      let agent = this.availableAgents[i];
-      for (let skill in agent.skills) {
-        if (agent.skills[skill] == true) {
-          if (temp[skill] == undefined) {
-            temp[skill] = [];
-          }
-          temp[skill].push(agent);
-        }
-      }
+    for (let i = 0; i < supportRequestTypes.length; i++) {
+      temp[supportRequestTypes[i]] = [];
     }
+    // for (let i = 0; i < this.availableAgents.length; i++) {
+    //   let agent = this.availableAgents[i];
+    //   for (let skill in agent.skills) {
+    //     if (agent.skills[skill] == true) {
+    //       if (temp[skill] == undefined) {
+    //         temp[skill] = [];
+    //       }
+    //       temp[skill].push(agent);
+    //     }
+    //   }
+    // }
     this.availableAgents = temp;
     console.log(this.availableAgents);
   }
 
   async checkQueue(recurse = true) {
-    this.socket.send("get_queue_status {}");
+    this.socket.send(`get_queue_status {admin_uuid: ${admin.uuid}}`);
     await this.socket.waitCounter();
     let values = await Promise.all(Object.values(this.socket.buffer));
     let queues;
@@ -162,12 +226,13 @@ class SDK {
     let agentAssigned = false;
     for (let queueType in queues) {
       let queue = queues[queueType];
-      console.log(queueType, queue);
+      console.log(`${queueType}: ${queue.count}`);
       for (let i = 0; i < queue.count; i++) {
         await this.assignAgent(queueType);
         agentAssigned = true;
       }
     }
+    console.log("");
     if (agentAssigned) await this.checkLimboAgents();
     if (recurse) setTimeout(this.checkQueue.bind(this), 5000);
   }
@@ -185,14 +250,16 @@ class SDK {
         );
       }
     }
-    this.socket.send(`take_support_request {uuid: ${agent.uuid}}`);
-    this.limboAgents[agent.uuid] = agent;
+    this.socket.send(`take_support_request {rainbow_id: ${agent.rainbow_id}}`);
+    this.limboAgents[agent.rainbow_id] = agent;
   }
 
   async checkUnavailableAgents(recurse = true) {
     console.log("Checking unavailable agents");
     for (let i = 0; i < this.unavailableAgents.length; i++) {
-      this.socket.send(`check_agent {uuid:${this.unavailableAgents[i].uuid}}`);
+      this.socket.send(
+        `check_agent {rainbow_id:${this.unavailableAgents[i].rainbow_id}}`
+      );
     }
     await this.socket.waitCounter();
     let values = await Promise.all(Object.values(this.socket.buffer));
@@ -200,7 +267,9 @@ class SDK {
       if (values[i].method == "check_agent") {
         this.socket.popResult(values[i].ticket_number);
         for (let j = 0; j < this.unavailableAgents.length; j++) {
-          if (this.unavailableAgents[i].uuid == values[i].payload.uuid) {
+          if (
+            this.unavailableAgents[j].rainbow_id == values[i].payload.rainbow_id
+          ) {
             if (values[i].payload.available == true) {
               let agent = this.unavailableAgents[j];
               this.unavailableAgents.splice(j, 1);
@@ -215,7 +284,7 @@ class SDK {
         }
       }
     }
-    console.log(this.unavailableAgents);
+    console.log("Unavailable agent: ", this.unavailableAgents);
     if (recurse) setTimeout(this.checkUnavailableAgents.bind(this), 30000);
   }
 
@@ -226,10 +295,11 @@ class SDK {
       if (values[i].method == "take_support_request") {
         this.socket.popResult(values[i].ticket_number);
         if (values[i].result == "success") {
-          let agent = this.limboAgents[values[i].payload.uuid];
+          let agent = this.limboAgents[values[i].payload.rainbow_id];
+          agent.requestCount++;
           this.unavailableAgents.push(agent);
           console.log(this.unavailableAgents);
-          delete this.limboAgents[values[i].uuid];
+          delete this.limboAgents[values[i].rainbow_id];
         }
       }
     }
