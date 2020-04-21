@@ -62,6 +62,12 @@ class SDKRouter {
           console.log(err);
         });
     });
+
+    router.post("/end", (req, res) => {
+      console.log(req.body);
+      this.sdk.sendMessageToAgent(req.body.rainbow_id, req.body.customer_email);
+      res.end();
+    });
   }
 }
 

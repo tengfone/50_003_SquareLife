@@ -58,6 +58,10 @@ class SDK {
     return this.rainbowSDK;
   }
 
+  sendMessageToAgent(rainbowId, customerEmail) {
+    console.log("SEND");
+  }
+
   setListeners() {
     this.rainbowSDK.events.on("rainbow_ondisconnected", (data) => {
       console.log(
@@ -77,7 +81,7 @@ class SDK {
       async (contact) => {
         let rainbowID = contact.id;
         let presence = contact.presence;
-        console.log(rainbowID, presence);
+        console.log(`${rainbowID} is now ${presence}`);
         if (presence == "away") return;
         //
         this.socket.send(
@@ -96,7 +100,31 @@ class SDK {
                 let pushItem = this.removeAgentFromUnavailable(rainbowID);
                 if (pushItem) {
                   for (let skill in pushItem.skills) {
-                    this.availableAgents[skill].push(pushItem);
+                    if (pushItem.skills[skill] == true) {
+                      if (this.availableAgents[skill].length == 0) {
+                        this.availableAgents[skill].push(pushItem);
+                      } else {
+                        for (
+                          let j = 0;
+                          j < this.availableAgents[skill].length;
+                          j++
+                        ) {
+                          if (
+                            pushItem.requestCount <=
+                            this.availableAgents[skill][j].requestCount
+                          ) {
+                            this.availableAgents[skill].splice(j, 0, pushItem);
+                            break;
+                          } else if (
+                            j ==
+                            this.availableAgents[skill].length - 1
+                          ) {
+                            this.availableAgents[skill].push(pushItem);
+                            break;
+                          }
+                        }
+                      }
+                    }
                   }
                   console.log("Available agents: ", this.availableAgents);
                 }
@@ -209,10 +237,11 @@ class SDK {
     //   }
     // }
     this.availableAgents = temp;
-    console.log(this.availableAgents);
+    console.log("Available Agent: ", this.availableAgents);
   }
 
   async checkQueue(recurse = true) {
+    console.log("Checking Queue Status");
     this.socket.send(`get_queue_status {admin_uuid: ${admin.uuid}}`);
     await this.socket.waitCounter();
     let values = await Promise.all(Object.values(this.socket.buffer));
@@ -225,6 +254,7 @@ class SDK {
       }
     }
     let agentAssigned = false;
+    console.log("");
     for (let queueType in queues) {
       let queue = queues[queueType];
       console.log(`${queueType}: ${queue.count}`);
@@ -276,7 +306,26 @@ class SDK {
               this.unavailableAgents.splice(j, 1);
               for (let skill in agent.skills) {
                 if (agent.skills[skill] == true) {
-                  this.availableAgents[skill].push(agent);
+                  if (this.availableAgents[skill].length == 0) {
+                    this.availableAgents[skill].push(agent);
+                  } else {
+                    for (
+                      let k = 0;
+                      k < this.availableAgents[skill].length;
+                      k++
+                    ) {
+                      if (
+                        agent.requestCount <=
+                        this.availableAgents[skill][k].requestCount
+                      ) {
+                        this.availableAgents[skill].splice(k, 0, agent);
+                        break;
+                      } else if (k == this.availableAgents[skill].length - 1) {
+                        this.availableAgents[skill].push(agent);
+                        break;
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -286,10 +335,12 @@ class SDK {
       }
     }
     console.log("Unavailable agent: ", this.unavailableAgents);
+    console.log("Available agents: ", this.availableAgents);
     if (recurse) setTimeout(this.checkUnavailableAgents.bind(this), 30000);
   }
 
   async checkLimboAgents() {
+    console.log("Checking Limbo Agents");
     await this.socket.waitCounter();
     let values = await Promise.all(Object.values(this.socket.buffer));
     for (let i = 0; i < values.length; i++) {

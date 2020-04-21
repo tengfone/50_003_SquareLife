@@ -33,27 +33,112 @@
   <style>
     #chatlog {
       overflow: auto;
-      height: 45vh;
+      height: 55vh;
+    }
+    .main {
+      display: grid;
+      grid-template-areas:
+        "info"
+        "chatlog"
+        "input";
+      padding: 0 10%;
+      margin-top: 2em;
+    }
+    #menu {
+      grid-area: info;
+    }
+    #chatlog {
+      grid-area: chatlog;
+    }
+    #inputFields {
+      grid-area: input;
+    }
+    .mediaplayers {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      margin: auto;
+      z-index: -1;
     }
   </style>
   <body>
-    <video id="minivideo" autoplay muted></video>
-    <video id="largevideo" autoplay></video>
-    <video id="globalVideoTag" autoplay style="display: none;"></video>
-    <audio id="globalAudioTag" autoplay style="display: none;"></audio>
-    <div id="wrapper">
+    <nav
+      class="navbar navbar-expand-lg navbar-dark bg-primary"
+      style="padding-left: 10%; padding-right: 10%;"
+    >
+      <a class="navbar-brand" href="#">
+        🔲 SquareLife
+      </a>
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item px-1">
+            <a class="nav-link" href="#">Home </a>
+          </li>
+          <li class="nav-item px-1">
+            <a class="nav-link" href="#">Features</a>
+          </li>
+          <li class="nav-item px-1">
+            <a class="nav-link" href="#">Pricing</a>
+          </li>
+          <li class="nav-item active px-1">
+            <a class="nav-link" href="#"
+              >Chat<span class="sr-only">(current)</span></a
+            >
+          </li>
+        </ul>
+      </div>
+    </nav>
+    <div class="mediaplayers">
+      <video id="minivideo" autoplay muted></video>
+      <video id="largevideo" autoplay></video>
+      <video id="globalVideoTag" autoplay style="display: none;"></video>
+      <audio id="globalAudioTag" autoplay style="display: none;"></audio>
+    </div>
+    <div
+      class="modal fade"
+      id="loadingModal"
+      role="dialog"
+      data-keyboard="false"
+      data-backdrop="static"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header justify-content-center">
+            <h4 class="modal-title text-center">
+              Waiting to be assigned an agent
+            </h4>
+          </div>
+          <div
+            class="modal-body d-flex flex-column justify-content-center align-items-center"
+          >
+            <p id="loadingModal__content">
+              Please wait as we find an agent for you...
+            </p>
+            <div class="spinner-border text-primary" role="status">
+              <span class="sr-only">Loading...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="wrapper" class="main">
       <div id="menu" class="py-1 text-center">
         <h1 class="welcome">Welcome <%= firstName %> <%= lastName %></h1>
-        <h6 class="container" id="waitingAgent">
+        <!-- <h6 class="container" id="waitingAgent">
           We are assigning a suitable agent to assist you. Please hold on.
-        </h6>
+        </h6> -->
 
         <br />
         <a id="exit" role="button" class="btn btn-outline-danger">Exit Chat</a>
         <div style="clear: both;"></div>
       </div>
       <div class="container mb-3" id="chatlog"></div>
-      <div class="container">
+      <div class="container" id="inputFields">
         <div class="input-group">
           <input
             id="usermsg"
@@ -71,13 +156,13 @@
               name="submitmsg"
               disabled
             >
-              <span
+              <!-- <span
                 class="spinner-border spinner-border-sm"
                 role="status"
                 aria-hidden="true"
                 id="loadanimation"
-              ></span>
-              Loading...
+              ></span> -->
+              Send
             </button>
             <!-- Trigger the modal with a button -->
             <button
@@ -91,13 +176,13 @@
               data-keyboard="false"
               disabled
             >
-              <span
+              <!-- <span
                 class="spinner-border spinner-border-sm"
                 role="status"
                 aria-hidden="true"
                 id="loadanimation"
-              ></span>
-              Loading...
+              ></span> -->
+              Voice Chat
             </button>
 
             <button
@@ -106,13 +191,13 @@
               name="dlchatlog"
               disabled
             >
-              <span
+              <!-- <span
                 class="spinner-border spinner-border-sm"
                 role="status"
                 aria-hidden="true"
                 id="loadanimation"
-              ></span>
-              Loading...
+              ></span> -->
+              Download Chat Log
             </button>
           </span>
           <!-- Modal -->

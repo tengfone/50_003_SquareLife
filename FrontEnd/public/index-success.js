@@ -10,8 +10,10 @@ let socket, agentUUID, clientUUID;
 let userDLChatLog = ["Welcome To SquareLife Chat Log"];
 let closeBoolean = false;
 const timeoutinSeconds = 5 * 60;
+let close = false;
 
 document.addEventListener("DOMContentLoaded", handleError(onDOMLoaded));
+$("#loadingModal").modal("show");
 
 function handleError(fn) {
   return function (...params) {
@@ -106,10 +108,10 @@ function waitForAgent(uuid = clientUUID) {
             response.payload.assigned_agent.uuid,
           ]);
         } else if (response.result == "pending") {
-          document.getElementById("waitingAgent").style.display = "";
-          document.getElementById("waitingAgent").innerHTML =
-            "All our agents are currently busy. You are placed in a queue and an agent will be assigned to you shortly. <br/> Please wait in this chat for your turn.";
-
+          // document.getElementById("waitingAgent").style.display = "";
+          // document.getElementById("waitingAgent").innerHTML =
+          //   "All our agents are currently busy. You are placed in a queue and an agent will be assigned to you shortly. <br/> Please wait in this chat for your turn.";
+          $("#loadingModal").modal("show");
           resolve(
             (() => {
               return new Promise((resolve, reject) => {
@@ -133,9 +135,10 @@ function waitForAgent(uuid = clientUUID) {
             })()
           );
         } else {
-          document.getElementById("waitingAgent").style.display = "";
-          document.getElementById("waitingAgent").innerHTML =
-            "All our agents are currently busy. You are placed in a queue and an agent will be assigned to you shortly. Please wait in this chat for your turn.";
+          $("#loadingModal").modal("show");
+          // document.getElementById("waitingAgent").style.display = "";
+          // document.getElementById("waitingAgent").innerHTML =
+          //   "All our agents are currently busy. You are placed in a queue and an agent will be assigned to you shortly. Please wait in this chat for your turn.";
           resolve(waitForAgent());
         }
       },
@@ -429,18 +432,18 @@ function initUI(conversation) {
   assignInputListeners();
 
   // EXIT SEQUENCE
-  $(window).bind("beforeunload", async function (e) {
-    if (!closeBoolean) {
-      endChat();
-      try {
-        await closeSupportRequest();
-      } catch (err) {}
-      socket.close();
-      return "TO CLOSE";
-    } else {
-      return null;
-    }
-  });
+  // $(window).bind("beforeunload", async function (e) {
+  //   if (!closeBoolean) {
+  //     try {
+  //       endChat();
+  //       await closeSupportRequest();
+  //     } catch (err) {}
+  //     socket.close();
+  //     return "TO CLOSE";
+  //   } else {
+  //     return null;
+  //   }
+  // });
 
   document.addEventListener(
     rainbowSDK.im.RAINBOW_ONNEWIMMESSAGERECEIVED,
@@ -465,6 +468,8 @@ function initUI(conversation) {
           "left"
         );
         toggleInputFields(true);
+        close = true;
+        closeBoolean = true;
       } else if (message.data.includes("//reassignagent")) {
         let type = message.data[message.data.length - 1];
         if (!Number.isInteger(Number(type))) {
@@ -476,13 +481,14 @@ function initUI(conversation) {
         }
         //send data to routing engine
         toggleInputFields(true);
+        $("#loadingModal").modal("show");
         let message2 = "We will now be reassigning another agent to you.";
         addMessage(
           contact.firstname + " " + contact.lastname,
           message2,
           "left"
         );
-        document.getElementById("waitingAgent").style.display = "initital";
+        // document.getElementById("waitingAgent").style.display = "initital";
         rainbowSDK.im.sendMessageToConversation(
           associatedConversation,
           "Reassigning support request"
@@ -491,7 +497,8 @@ function initUI(conversation) {
         await reassignAgent(Number(type));
         reinitialiseChat();
         toggleInputFields(false);
-        document.getElementById("waitingAgent").style.display = "none";
+        $("#loadingModal").modal("show");
+        // document.getElementById("waitingAgent").style.display = "none";
       } else {
         console.log(message);
         let d = new Date().toLocaleString();
@@ -518,30 +525,37 @@ function initUI(conversation) {
     "The session has begun with " + customer_email
   );
 
-  document.getElementById("usermsg").disabled = false;
-  let submitbtn = document.getElementById("submitmsg");
-  submitbtn.removeChild(document.getElementById("loadanimation"));
-  submitbtn.innerHTML = "Send";
-  submitbtn.disabled = false;
+  toggleInputFields(false);
 
-  let voiceChatbtn = document.getElementById("voiceChat");
-  voiceChatbtn.removeChild(document.getElementById("loadanimation"));
-  voiceChatbtn.innerHTML = "Voice Chat";
-  voiceChatbtn.disabled = false;
+  // document.getElementById("usermsg").disabled = false;
+  // let submitbtn = document.getElementById("submitmsg");
+  // submitbtn.removeChild(document.getElementById("loadanimation"));
+  // submitbtn.innerHTML = "Send";
+  // submitbtn.disabled = false;
 
-  let chatDLbtn = document.getElementById("dlchatlog");
-  chatDLbtn.removeChild(document.getElementById("loadanimation"));
-  chatDLbtn.innerHTML = "Download Chat Log";
-  chatDLbtn.disabled = false;
+  // let voiceChatbtn = document.getElementById("voiceChat");
+  // voiceChatbtn.removeChild(document.getElementById("loadanimation"));
+  // voiceChatbtn.innerHTML = "Voice Chat";
+  // voiceChatbtn.disabled = false;
+
+  // let chatDLbtn = document.getElementById("dlchatlog");
+  // chatDLbtn.removeChild(document.getElementById("loadanimation"));
+  // chatDLbtn.innerHTML = "Download Chat Log";
+  // chatDLbtn.disabled = false;
 
   let exitbtn = document.getElementById("exit");
   exitbtn.disabled = false;
   exitbtn.addEventListener("click", handleError(exitBtnSocket), false);
 
-  document.getElementById("waitingAgent").style.display = "none";
+  // document.getElementById("waitingAgent").style.display = "none";
+  $("#loadingModal").modal("hide");
 
   async function exitBtnSocket() {
     let confirmed = window.confirm("Exit To Main Menu?");
+    if (closed) {
+      window.location.pathname = "/";
+      return;
+    }
     if (confirmed) {
       closeBoolean = true;
       endChat();
@@ -600,8 +614,9 @@ function timeOut() {
       if (secondsSinceLastActivity > maxInactivity && boolFlag) {
         boolFlag = false;
         closeBoolean = true;
-        endChat();
+        close = true;
         window.alert("You have been logged out due to inactivity.");
+        endChat();
         await closeSupportRequest();
         socket.close();
         toggleInputFields(true);
@@ -744,8 +759,8 @@ function voiceChat() {
 }
 
 const user_stays = async function () {
-  endChat();
   try {
+    endChat();
     await closeSupportRequest();
   } catch (err) {}
   socket.close();
@@ -754,9 +769,42 @@ const user_stays = async function () {
 
 window.addEventListener("beforeunload", async function onBeforeUnload(e) {
   setTimeout(user_stays, 500);
-  endChat();
   try {
+    endChat();
     await closeSupportRequest();
   } catch (err) {}
   socket.close();
 });
+
+window.onunload = function end() {
+  navigator.sendBeacon(
+    "https://localhost:3005/sdk/end",
+    new Blob(
+      [
+        JSON.stringify({
+          customer_email: customer_email,
+          rainbow_id: agentId,
+        }),
+      ],
+      { type: "application/json; charset=UTF-8" }
+    )
+  );
+};
+// window.addEventListener(
+//   "unload",
+//   () => {
+//     navigator.sendBeacon(
+//       "https://localhost:3005/sdk/end",
+//       new Blob(
+//         [
+//           JSON.stringify({
+//             customer_email: customer_email,
+//             rainbow_id: agentId,
+//           }),
+//         ],
+//         { type: "application/json; charset=UTF-8" }
+//       )
+//     );
+//   },
+//   false
+// );
