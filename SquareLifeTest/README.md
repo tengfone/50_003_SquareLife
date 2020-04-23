@@ -12,10 +12,10 @@ All tests are asserted true by default.
 |  1  | testFrontPageSuccessful   | All Valid Credentials                           |      True      |     True     |
 |  2  | testFrontPageInvalidName1 | Firstname empty                                 |     False      |    False     |
 |  3  | testFrontPageInvalidName2 | Lastname empty                                  |     False      |    False     |
-|  4  | testFrontPageInvalidName3 | Symbols in Firstname                            |     False      |     True     |
-|  5  | testFrontPageInvalidName4 | Symbols in Lastname                             |     False      |     True     |
-|  6  | testFrontPageInvalidName5 | 1000 Char Firstname                             |     False      |     True     |
-|  7  | testFrontPageInvalidName6 | 1000 Char Lastname                              |     False      |     True     |
+|  4  | testFrontPageInvalidName3 | Symbols in Firstname                            |      True      |     True     |
+|  5  | testFrontPageInvalidName4 | Symbols in Lastname                             |      True      |     True     |
+|  6  | testFrontPageInvalidName5 | 1000 Char Firstname                             |      True      |     True     |
+|  7  | testFrontPageInvalidName6 | 1000 Char Lastname                              |      True      |     True     |
 |  8  | testFrontPageEmail1       | Invalid Email - "testing.com"                   |     False      |    False     |
 |  9  | testFrontPageEmail2       | Invalid Email - "testing@.com"                  |     False      |    False     |
 | 10  | testFrontPageEmail3       | Invalid Email - "tes@!ting@.com"                |     False      |    False     |

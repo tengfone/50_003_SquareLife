@@ -20,8 +20,6 @@ class SDK {
     this.socket = new RoutingEngineSocket("ws://localhost:4000/");
     let socketPromise = this.socket.start();
     let sdkPromise = this.rainbowSDK.start();
-    // let socketPromise = null;
-    // let sdkPromise = null;
     await Promise.all([sdkPromise, socketPromise]);
     await this.initAgents();
     this.checkQueue();

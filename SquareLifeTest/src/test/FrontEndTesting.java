@@ -22,17 +22,29 @@ public class FrontEndTesting {
 	Select dropdown;
 	AgentTesting agentTesting;
 	WebDriverWait wait;
+	ArrayList<String> tabs;
 	final static String WEBSITEURL = "https://localhost:3005/";
 
 	void fillingUpDetails(int n) {
 		// Use either by index or visible text
-		dropdown.selectByIndex(0);
+		new Select(driver.findElement(By.id("customer_option"))).selectByIndex(1);
 		// fill up name boxes
-		firstName.sendKeys("User" + n + "FirstName");
-		secondName.sendKeys("User" + n + "LastName");
-		email.sendKeys("testing" + n + "@test.com");
+		driver.findElement(By.id("firstname")).sendKeys("User" + n + "FirstName");
+		driver.findElement(By.id("lastname")).sendKeys("User" + n + "LastName");
+		driver.findElement(By.id("customer_email")).sendKeys("testing" + n + "@test.com");
 		// submit
-		submit.click();
+		driver.findElement(By.className("btn-primary")).click();
+	}
+
+	void switchToTab(int tabNum) {
+		this.tabs = new ArrayList<String>(driver.getWindowHandles());
+		driver.switchTo().window(tabs.get(tabNum));
+	}
+
+	void openNewTab() {
+		((JavascriptExecutor) driver).executeScript("window.open('about:blank','_blank');");
+		tabs = new ArrayList<String>(driver.getWindowHandles());
+		driver.switchTo().window(tabs.get(tabs.size() - 1));
 	}
 
 	@Before
@@ -41,8 +53,8 @@ public class FrontEndTesting {
 		options.setAcceptInsecureCerts(true);
 		options.setUnhandledPromptBehaviour(UnexpectedAlertBehaviour.ACCEPT);
 		driver = new ChromeDriver(options);
-		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-		wait = new WebDriverWait(driver, 20);
+		driver.manage().timeouts().implicitlyWait(20, TimeUnit.SECONDS);
+		wait = new WebDriverWait(driver, 40);
 		agentTesting = new AgentTesting(driver, "UserFirstName", "UserLastName");
 		driver.get(WEBSITEURL);
 		firstName = driver.findElement(By.id("firstname"));
@@ -63,7 +75,9 @@ public class FrontEndTesting {
 		System.out.println("Starting Test " + new Object() {
 		}.getClass().getEnclosingMethod().getName());
 		// Use either by index or visible text
-		dropdown.selectByIndex(0);
+		agentTesting.agentLogin();
+		agentTesting.switchToFirstTab();
+		dropdown.selectByIndex(1);
 		// fill up name boxes
 		firstName.sendKeys("UserFirstName");
 		secondName.sendKeys("UserLastName");
@@ -71,9 +85,19 @@ public class FrontEndTesting {
 		// submit
 		submit.click();
 		// Send button
-		WebElement send = wait.until(ExpectedConditions.visibilityOfElementLocated(
+		WebElement send = wait.until(ExpectedConditions.elementToBeClickable(
 				By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]")));
 		boolean sendEnabled = send.isEnabled();
+		WebElement exitBtn = driver.findElement(By.id("exit"));
+		exitBtn.click();
+		try {
+			driver.switchTo().alert().accept();
+		} catch (NoAlertPresentException e) {
+			// That's fine.
+		}
+		agentTesting.switchToTab(1);
+		agentTesting.closeConversation();
+		Thread.sleep(2000);
 		assertTrue(sendEnabled);
 	}
 
@@ -83,7 +107,7 @@ public class FrontEndTesting {
 		System.out.println("Starting Test " + new Object() {
 		}.getClass().getEnclosingMethod().getName());
 		// Use either by index or visible text
-		dropdown.selectByIndex(0);
+		dropdown.selectByIndex(1);
 		// fill up name boxes
 		firstName.sendKeys("");
 		secondName.sendKeys("UserLastName");
@@ -112,6 +136,9 @@ public class FrontEndTesting {
 	}
 
 	/* Special Characters and Symbols in First Name field */
+	/*
+	 * Expected: Passed. Rainbow allows special symbols and characters in the name fields.
+	 */
 	@Test
 	public void testFrontPageInvalidName3() throws Exception {
 		System.out.println("Starting Test " + new Object() {
@@ -129,6 +156,9 @@ public class FrontEndTesting {
 	}
 
 	/* Special Characters and Symbols in Lastname field */
+	/*
+	 * Expected: Passed. Rainbow allows special symbols and characters in the name fields.
+	 */
 	@Test
 	public void testFrontPageInvalidName4() throws Exception {
 		System.out.println("Starting Test " + new Object() {
@@ -146,6 +176,7 @@ public class FrontEndTesting {
 	}
 
 	/* Very Long First Name */
+	/* Expected: Pass. Reason: Input field limited to 30 char */
 	@Test
 	public void testFrontPageInvalidName5() throws Exception {
 		System.out.println("Starting Test " + new Object() {
@@ -164,6 +195,7 @@ public class FrontEndTesting {
 	}
 
 	/* Really Long Last Name */
+	/* Expected: Pass. Reason: Input field limited to 30 char */
 	@Test
 	public void testFrontPageInvalidName6() throws Exception {
 		System.out.println("Starting Test " + new Object() {
@@ -270,8 +302,11 @@ public class FrontEndTesting {
 		Boolean messageReceived;
 		// Set message to be sent
 		String message = "hello";
+		// Set agent to online
+		agentTesting.agentLogin();
+		agentTesting.switchToFirstTab();
 		// Use either by index or visible text
-		dropdown.selectByIndex(0);
+		dropdown.selectByIndex(1);
 		// fill up name boxes
 		firstName.sendKeys("UserFirstName");
 		secondName.sendKeys("UserLastName");
@@ -279,12 +314,18 @@ public class FrontEndTesting {
 		// submit
 		submit.click();
 		// Send button
-		WebElement send = wait.until(ExpectedConditions.visibilityOfElementLocated(
+		WebElement send = wait.until(ExpectedConditions.elementToBeClickable(
 				By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]")));
 		WebElement usermsg = driver.findElement(By.id("usermsg"));
 		usermsg.sendKeys(message);
 		send.click();
+		agentTesting.switchToTab(1);
 		messageReceived = agentTesting.receivedMessage(message);
+		agentTesting.sendMessage("//endchat");
+		Thread.sleep(2000);
+		agentTesting.closeConversation();
+		Thread.sleep(2000);
+
 		assertTrue(messageReceived);
 	}
 
@@ -295,8 +336,11 @@ public class FrontEndTesting {
 		Boolean messageReceived;
 		// Set message to be sent
 		String message = "!@#$%^&*()_+1234567890-=,./;[]\\";
+		// Set agent to online
+		agentTesting.agentLogin();
+		agentTesting.switchToFirstTab();
 		// Use either by index or visible text
-		dropdown.selectByIndex(0);
+		dropdown.selectByIndex(1);
 		// fill up name boxes
 		firstName.sendKeys("UserFirstName");
 		secondName.sendKeys("UserLastName");
@@ -304,12 +348,17 @@ public class FrontEndTesting {
 		// submit
 		submit.click();
 		// Send button
-		WebElement send = wait.until(ExpectedConditions.visibilityOfElementLocated(
+		WebElement send = wait.until(ExpectedConditions.elementToBeClickable(
 				By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]")));
 		WebElement usermsg = driver.findElement(By.id("usermsg"));
 		usermsg.sendKeys(message);
 		send.click();
+		agentTesting.switchToTab(1);
 		messageReceived = agentTesting.receivedMessage(message);
+		agentTesting.sendMessage("//endchat");
+		Thread.sleep(2000);
+		agentTesting.closeConversation();
+		Thread.sleep(2000);
 		assertTrue(messageReceived);
 	}
 
@@ -320,8 +369,11 @@ public class FrontEndTesting {
 		Boolean messageReceived;
 		// Set message to be sent
 		String message = " ";
+		// Set agent to online
+		agentTesting.agentLogin();
+		agentTesting.switchToFirstTab();
 		// Use either by index or visible text
-		dropdown.selectByIndex(0);
+		dropdown.selectByIndex(1);
 		// fill up name boxes
 		firstName.sendKeys("UserFirstName");
 		secondName.sendKeys("UserLastName");
@@ -329,15 +381,23 @@ public class FrontEndTesting {
 		// submit
 		submit.click();
 		// Send button
-		WebElement send = wait.until(ExpectedConditions.visibilityOfElementLocated(
+		WebElement send = wait.until(ExpectedConditions.elementToBeClickable(
 				By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]")));
 		WebElement usermsg = driver.findElement(By.id("usermsg"));
 		usermsg.sendKeys(message);
 		send.click();
+		agentTesting.switchToTab(1);
 		messageReceived = agentTesting.receivedMessage(message);
+		agentTesting.sendMessage("//endchat");
+		Thread.sleep(2000);
+		agentTesting.closeConversation();
+		Thread.sleep(2000);
 		assertTrue(messageReceived);
 	}
 
+	/*
+	 * Expected: Failed
+	 */
 	@Test
 	public void testAgentReceived4() throws Exception {
 		System.out.println("Starting Test " + new Object() {
@@ -345,8 +405,11 @@ public class FrontEndTesting {
 		Boolean messageReceived;
 		// Set message to be sent
 		String message = String.join("", Collections.nCopies(1025, "d"));
+		// Set agent to online
+		agentTesting.agentLogin();
+		agentTesting.switchToFirstTab();
 		// Use either by index or visible text
-		dropdown.selectByIndex(0);
+		dropdown.selectByIndex(1);
 		// fill up name boxes
 		firstName.sendKeys("UserFirstName");
 		secondName.sendKeys("UserLastName");
@@ -354,12 +417,17 @@ public class FrontEndTesting {
 		// submit
 		submit.click();
 		// Send button
-		WebElement send = wait.until(ExpectedConditions.visibilityOfElementLocated(
+		WebElement send = wait.until(ExpectedConditions.elementToBeClickable(
 				By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]")));
 		WebElement usermsg = driver.findElement(By.id("usermsg"));
 		usermsg.sendKeys(message);
 		send.click();
+		agentTesting.switchToTab(1);
 		messageReceived = agentTesting.receivedMessage(message);
+		agentTesting.sendMessage("//endchat");
+		Thread.sleep(2000);
+		agentTesting.closeConversation();
+		Thread.sleep(2000);
 		assertTrue(messageReceived);
 	}
 
@@ -372,7 +440,10 @@ public class FrontEndTesting {
 		// Set message to be sent
 		String message = "HELLO";
 		// Use either by index or visible text
-		dropdown.selectByIndex(0);
+		// Set agent to online
+		agentTesting.agentLogin();
+		agentTesting.switchToFirstTab();
+		dropdown.selectByIndex(1);
 		// fill up name boxes
 		firstName.sendKeys("UserFirstName");
 		secondName.sendKeys("UserLastName");
@@ -380,9 +451,11 @@ public class FrontEndTesting {
 		// submit
 		submit.click();
 		// Send button
-		wait.until(ExpectedConditions.visibilityOfElementLocated(
+		wait.until(ExpectedConditions.elementToBeClickable(
 				By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]")));
+		agentTesting.switchToTab(1);
 		agentTesting.sendMessage(message);
+		agentTesting.switchToFirstTab();
 		String userChatMessageXpath =
 				String.format("//h3[@class='text-left' and contains(text(),'%s')]", message);
 		try {
@@ -391,6 +464,11 @@ public class FrontEndTesting {
 		} catch (TimeoutException e) {
 			messageReceived = false;
 		}
+		agentTesting.switchToTab(1);
+		agentTesting.sendMessage("//endchat");
+		Thread.sleep(2000);
+		agentTesting.closeConversation();
+		Thread.sleep(2000);
 		assertTrue(messageReceived);
 	}
 
@@ -401,8 +479,11 @@ public class FrontEndTesting {
 		Boolean messageReceived;
 		// Set message to be sent
 		String message = "!@#$%^&*()_+1234567890-=,./;[]\\";
+		// Set agent to online
+		agentTesting.agentLogin();
+		agentTesting.switchToFirstTab();
 		// Use either by index or visible text
-		dropdown.selectByIndex(0);
+		dropdown.selectByIndex(1);
 		// fill up name boxes
 		firstName.sendKeys("UserFirstName");
 		secondName.sendKeys("UserLastName");
@@ -410,9 +491,11 @@ public class FrontEndTesting {
 		// submit
 		submit.click();
 		// Send button
-		wait.until(ExpectedConditions.visibilityOfElementLocated(
+		wait.until(ExpectedConditions.elementToBeClickable(
 				By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]")));
+		agentTesting.switchToTab(1);
 		agentTesting.sendMessage(message);
+		agentTesting.switchToFirstTab();
 		String userChatMessageXpath =
 				String.format("//h3[@class='text-left' and contains(text(),'%s')]", message);
 		try {
@@ -421,6 +504,11 @@ public class FrontEndTesting {
 		} catch (TimeoutException e) {
 			messageReceived = false;
 		}
+		agentTesting.switchToTab(1);
+		agentTesting.sendMessage("//endchat");
+		Thread.sleep(2000);
+		agentTesting.closeConversation();
+		Thread.sleep(2000);
 		assertTrue(messageReceived);
 	}
 
@@ -431,8 +519,11 @@ public class FrontEndTesting {
 		Boolean messageReceived;
 		// Set message to be sent
 		String message = " ";
+		// Set agent to online
+		agentTesting.agentLogin();
+		agentTesting.switchToFirstTab();
 		// Use either by index or visible text
-		dropdown.selectByIndex(0);
+		dropdown.selectByIndex(1);
 		// fill up name boxes
 		firstName.sendKeys("UserFirstName");
 		secondName.sendKeys("UserLastName");
@@ -440,9 +531,11 @@ public class FrontEndTesting {
 		// submit
 		submit.click();
 		// Send button
-		wait.until(ExpectedConditions.visibilityOfElementLocated(
+		wait.until(ExpectedConditions.elementToBeClickable(
 				By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]")));
+		agentTesting.switchToTab(1);
 		agentTesting.sendMessage(message);
+		agentTesting.switchToFirstTab();
 		String userChatMessageXpath =
 				String.format("//h3[@class='text-left' and contains(text(),'%s')]", message);
 		try {
@@ -451,6 +544,11 @@ public class FrontEndTesting {
 		} catch (TimeoutException e) {
 			messageReceived = false;
 		}
+		agentTesting.switchToTab(1);
+		agentTesting.sendMessage("//endchat");
+		Thread.sleep(2000);
+		agentTesting.closeConversation();
+		Thread.sleep(2000);
 		assertTrue(messageReceived);
 	}
 
@@ -461,8 +559,11 @@ public class FrontEndTesting {
 		Boolean messageReceived;
 		// Set message to be sent
 		String message = String.join("", Collections.nCopies(1025, "d"));
+		// Set agent to online
+		agentTesting.agentLogin();
+		agentTesting.switchToFirstTab();
 		// Use either by index or visible text
-		dropdown.selectByIndex(0);
+		dropdown.selectByIndex(1);
 		// fill up name boxes
 		firstName.sendKeys("UserFirstName");
 		secondName.sendKeys("UserLastName");
@@ -470,9 +571,11 @@ public class FrontEndTesting {
 		// submit
 		submit.click();
 		// Send button
-		wait.until(ExpectedConditions.visibilityOfElementLocated(
+		wait.until(ExpectedConditions.elementToBeClickable(
 				By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]")));
+		agentTesting.switchToTab(1);
 		agentTesting.sendMessage(message);
+		agentTesting.switchToFirstTab();
 		String userChatMessageXpath =
 				String.format("//h3[@class='text-left' and contains(text(),'%s')]", message);
 		try {
@@ -481,9 +584,17 @@ public class FrontEndTesting {
 		} catch (TimeoutException e) {
 			messageReceived = false;
 		}
+		agentTesting.switchToTab(1);
+		agentTesting.sendMessage("//endchat");
+		Thread.sleep(2000);
+		agentTesting.closeConversation();
+		Thread.sleep(2000);
 		assertTrue(messageReceived);
 	}
 
+	/*
+	 * Expected: Failed
+	 */
 	@Test
 	public void testXSSInjection1() throws Exception {
 		System.out.println("Starting Test " + new Object() {
@@ -492,7 +603,7 @@ public class FrontEndTesting {
 		// Set XSS to be sent
 		String testXSSScript = "<script>alert('XML Injection Successful')</script>";
 		// Use either by index or visible text
-		dropdown.selectByIndex(0);
+		dropdown.selectByIndex(1);
 		// fill up name boxes
 		firstName.sendKeys(testXSSScript);
 		secondName.sendKeys(testXSSScript);
@@ -506,6 +617,7 @@ public class FrontEndTesting {
 		} catch (NoAlertPresentException e) {
 			noAlertDialog = true;
 		}
+
 		assertTrue(noAlertDialog);
 	}
 
@@ -516,8 +628,10 @@ public class FrontEndTesting {
 		Boolean noAlertDialog;
 		// Set XSS to be sent
 		String testXSSScript = "<script>alert('XML Injection Successful')</script>";
+		agentTesting.agentLogin();
+		agentTesting.switchToFirstTab();
 		// Use either by index or visible text
-		dropdown.selectByIndex(0);
+		dropdown.selectByIndex(1);
 		// fill up name boxes
 		firstName.sendKeys("UserFirstName");
 		secondName.sendKeys("UserLastName");
@@ -525,7 +639,7 @@ public class FrontEndTesting {
 		// submit
 		submit.click();
 		// Send button
-		WebElement send = wait.until(ExpectedConditions.visibilityOfElementLocated(
+		WebElement send = wait.until(ExpectedConditions.elementToBeClickable(
 				By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]")));
 		WebElement usermsg = driver.findElement(By.id("usermsg"));
 		usermsg.sendKeys(testXSSScript);
@@ -537,6 +651,12 @@ public class FrontEndTesting {
 		} catch (NoAlertPresentException e) {
 			noAlertDialog = true;
 		}
+		agentTesting.switchToTab(1);
+		agentTesting.sendMessage("//endchat");
+		Thread.sleep(2000);
+		agentTesting.closeConversation();
+		Thread.sleep(2000);
+
 		assertTrue(noAlertDialog);
 	}
 
@@ -548,60 +668,100 @@ public class FrontEndTesting {
 	public void testQueueSystem() throws Exception {
 		System.out.println("Starting Test " + new Object() {
 		}.getClass().getEnclosingMethod().getName());
-		boolean sendEnabled = false;
-		int numOfPreAssignAgents = 3;
-		fillingUpDetails(1);
-		// Send button
-		WebElement send = wait.until(ExpectedConditions.visibilityOfElementLocated(
-				By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]")));
-		sendEnabled = send.isEnabled();
-		if (sendEnabled) {
-			for (int i = 0; i < numOfPreAssignAgents; i++) {
-				agentTesting.openNewTab();
-				driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-				wait = new WebDriverWait(driver, 20);
-				driver.get(WEBSITEURL);
-				firstName = driver.findElement(By.id("firstname"));
-				secondName = driver.findElement(By.id("lastname"));
-				email = driver.findElement(By.id("customer_email"));
-				dropdown = new Select(driver.findElement(By.id("customer_option")));
-				submit = driver.findElement(By.className("btn-primary"));
-				fillingUpDetails(i + 2);
-				if (i == numOfPreAssignAgents - 1) {
-					break;
-				} else {
-					// Send button
-					WebElement sendBtn = wait.until(ExpectedConditions.visibilityOfElementLocated(
-							By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]")));
-					sendEnabled = sendBtn.isEnabled();
-				} ;
-				if (sendEnabled)
-					continue;
-				else
-					assert false;
-			}
-		} else
+
+
+		agentTesting.agentLogin(); // Tab 1
+		agentTesting.setNewCustomer("User1FirstName", "User1LastName");
+		agentTesting.switchToFirstTab();
+		fillingUpDetails(1); // Tab 0
+		openNewTab();
+		driver.get(WEBSITEURL);
+		fillingUpDetails(2); // Tab 2
+		switchToTab(0);
+		try {
+			wait.until(ExpectedConditions.elementToBeClickable(
+					By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]")));
+			switchToTab(1);
+			agentTesting.sendMessage("//endchat");
+			Thread.sleep(2000);
+			agentTesting.closeConversation();
+			Thread.sleep(2000);
+			agentTesting.setNewCustomer("User2FirstName", "User2LastName");
+			switchToTab(0);
+			wait.until(ExpectedConditions.not(ExpectedConditions.elementToBeClickable(
+					By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]"))));
+			switchToTab(2);
+			wait.until(ExpectedConditions.elementToBeClickable(
+					By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]")));
+			switchToTab(1);
+			agentTesting.sendMessage("//endchat");
+			Thread.sleep(2000);
+			agentTesting.closeConversation();
+			Thread.sleep(2000);
+			switchToTab(2);
+			wait.until(ExpectedConditions.not(ExpectedConditions.elementToBeClickable(
+					By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]"))));
+			assert true;
+		} catch (TimeoutException e) {
 			assert false;
-		ArrayList<String> tabs = new ArrayList<String>(driver.getWindowHandles());
-		driver.switchTo().window(tabs.get(0));
-		exit = driver.findElement(By.className("btn-outline-danger"));
-		exit.click();
-		driver.switchTo().alert().accept();
-		Thread.sleep(1000);
-		driver.switchTo().alert().accept();
-		Thread.sleep(1000);
-		driver.switchTo().window(tabs.get(3));
-		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-		WebElement sendBtn = wait.until(ExpectedConditions.visibilityOfElementLocated(
-				By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]")));
-		boolean sendEnabled2 = sendBtn.isEnabled();
-		assertTrue(sendEnabled2);
-		driver.close();
-		driver.switchTo().window(tabs.get(2));
-		driver.close();
-		driver.switchTo().window(tabs.get(1));
-		driver.close();
-		driver.switchTo().window(tabs.get(0));
-		driver.close();
+		}
+
+
+
+		// boolean sendEnabled = false;
+		// int numOfPreAssignAgents = 3;
+		// agentTesting.agentLogin();
+		// // Send button
+		// try {
+		// WebElement send = wait.until(ExpectedConditions.elementToBeClickable(
+		// By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]")));
+		// for (int i = 0; i < numOfPreAssignAgents; i++) {
+		// agentTesting.openNewTab();
+		// driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+		// wait = new WebDriverWait(driver, 20);
+		// driver.get(WEBSITEURL);
+		// firstName = driver.findElement(By.id("firstname"));
+		// secondName = driver.findElement(By.id("lastname"));
+		// email = driver.findElement(By.id("customer_email"));
+		// dropdown = new Select(driver.findElement(By.id("customer_option")));
+		// submit = driver.findElement(By.className("btn-primary"));
+		// fillingUpDetails(i + 2);
+		// if (i == numOfPreAssignAgents - 1) {
+		// break;
+		// } else {
+		// // Send button
+		// WebElement sendBtn = wait.until(ExpectedConditions.visibilityOfElementLocated(
+		// By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]")));
+		// sendEnabled = sendBtn.isEnabled();
+		// } ;
+		// if (sendEnabled)
+		// continue;
+		// else
+		// assert false;
+		// }
+		// } catch (TimeoutException e) {
+		// assert false;
+		// }
+		// ArrayList<String> tabs = new ArrayList<String>(driver.getWindowHandles());
+		// driver.switchTo().window(tabs.get(0));
+		// exit = driver.findElement(By.className("btn-outline-danger"));
+		// exit.click();
+		// driver.switchTo().alert().accept();
+		// Thread.sleep(1000);
+		// driver.switchTo().alert().accept();
+		// Thread.sleep(1000);
+		// driver.switchTo().window(tabs.get(3));
+		// driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+		// WebElement sendBtn = wait.until(ExpectedConditions.visibilityOfElementLocated(
+		// By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]")));
+		// boolean sendEnabled2 = sendBtn.isEnabled();
+		// assertTrue(sendEnabled2);
+		// driver.close();
+		// driver.switchTo().window(tabs.get(2));
+		// driver.close();
+		// driver.switchTo().window(tabs.get(1));
+		// driver.close();
+		// driver.switchTo().window(tabs.get(0));
+		// driver.close();
 	}
 }

@@ -6,7 +6,7 @@ const APPLICATION_SECRET =
   "NSxjiXUqyxYPdcT2Y4y8Dgje3gfUQCxyTNCoEP81vWrhsobuVGjwCsCpqxIMNQUU";
 let agentId = null;
 let associatedConversation = null;
-let socket, agentUUID, clientUUID;
+let socket, clientUUID;
 let userDLChatLog = ["Welcome To SquareLife Chat Log"];
 let closeBoolean = false;
 const timeoutinSeconds = 5 * 60;
@@ -47,7 +47,7 @@ async function initSocketConnection() {
   });
   await waitForConnection;
   clientUUID = await sendSupportRequest();
-  [agentId, agentUUID] = await waitForAgent();
+  agentId = await waitForAgent();
   console.log(agentId);
 }
 
@@ -103,14 +103,8 @@ function waitForAgent(uuid = clientUUID) {
         let response = JSON.parse(event.data);
         console.log(response);
         if (response.result == "success") {
-          resolve([
-            response.payload.assigned_agent.rainbow_id,
-            response.payload.assigned_agent.uuid,
-          ]);
+          resolve(response.payload.assigned_agent.rainbow_id);
         } else if (response.result == "pending") {
-          // document.getElementById("waitingAgent").style.display = "";
-          // document.getElementById("waitingAgent").innerHTML =
-          //   "All our agents are currently busy. You are placed in a queue and an agent will be assigned to you shortly. <br/> Please wait in this chat for your turn.";
           $("#loadingModal").modal("show");
           resolve(
             (() => {
@@ -121,10 +115,7 @@ function waitForAgent(uuid = clientUUID) {
                     let response = JSON.parse(event.data);
                     console.log(response);
                     if (response.result == "success") {
-                      resolve([
-                        response.payload.assigned_agent.rainbow_id,
-                        response.payload.assigned_agent.uuid,
-                      ]);
+                      resolve(response.payload.assigned_agent.rainbow_id);
                     } else {
                       resolve(waitForAgent());
                     }
@@ -136,9 +127,6 @@ function waitForAgent(uuid = clientUUID) {
           );
         } else {
           $("#loadingModal").modal("show");
-          // document.getElementById("waitingAgent").style.display = "";
-          // document.getElementById("waitingAgent").innerHTML =
-          //   "All our agents are currently busy. You are placed in a queue and an agent will be assigned to you shortly. Please wait in this chat for your turn.";
           resolve(waitForAgent());
         }
       },
@@ -335,7 +323,7 @@ function dropSupportRequest() {
 async function reassignAgent(type) {
   await dropSupportRequest();
   await changeSupportRequestType(type);
-  [agentId, agentUUID] = await waitForAgent();
+  agentId = await waitForAgent();
   console.log(agentId);
 }
 
@@ -431,20 +419,6 @@ function toggleInputFields(bool) {
 function initUI(conversation) {
   assignInputListeners();
 
-  // EXIT SEQUENCE
-  // $(window).bind("beforeunload", async function (e) {
-  //   if (!closeBoolean) {
-  //     try {
-  //       endChat();
-  //       await closeSupportRequest();
-  //     } catch (err) {}
-  //     socket.close();
-  //     return "TO CLOSE";
-  //   } else {
-  //     return null;
-  //   }
-  // });
-
   document.addEventListener(
     rainbowSDK.im.RAINBOW_ONNEWIMMESSAGERECEIVED,
     handleError(async (event) => {
@@ -452,6 +426,9 @@ function initUI(conversation) {
       let conversation = event.detail.conversation;
       //COMMANDS
       if (message.data == "//endchat") {
+        if (conversation != associatedConversation) {
+          return;
+        }
         //send data to routing engine that chat is closed so that new user can be reassigned to the agent
         let message2 = "The chat session will now be closed.";
         rainbowSDK.im.sendMessageToConversation(
@@ -459,7 +436,6 @@ function initUI(conversation) {
           "Closing chat session"
         );
 
-        //send data to routing engine that chat is closed so that new user can be reassigned to the agent
         await closeSupportRequest();
         socket.close();
         addMessage(
@@ -468,9 +444,14 @@ function initUI(conversation) {
           "left"
         );
         toggleInputFields(true);
+        elementRemoveListeners(document.getElementById("exit"));
+        document.getElementById("exit").disabled = true;
         close = true;
         closeBoolean = true;
       } else if (message.data.includes("//reassignagent")) {
+        if (conversation != associatedConversation) {
+          return;
+        }
         let type = message.data[message.data.length - 1];
         if (!Number.isInteger(Number(type))) {
           rainbowSDK.im.sendMessageToConversation(
@@ -527,35 +508,14 @@ function initUI(conversation) {
 
   toggleInputFields(false);
 
-  // document.getElementById("usermsg").disabled = false;
-  // let submitbtn = document.getElementById("submitmsg");
-  // submitbtn.removeChild(document.getElementById("loadanimation"));
-  // submitbtn.innerHTML = "Send";
-  // submitbtn.disabled = false;
-
-  // let voiceChatbtn = document.getElementById("voiceChat");
-  // voiceChatbtn.removeChild(document.getElementById("loadanimation"));
-  // voiceChatbtn.innerHTML = "Voice Chat";
-  // voiceChatbtn.disabled = false;
-
-  // let chatDLbtn = document.getElementById("dlchatlog");
-  // chatDLbtn.removeChild(document.getElementById("loadanimation"));
-  // chatDLbtn.innerHTML = "Download Chat Log";
-  // chatDLbtn.disabled = false;
-
   let exitbtn = document.getElementById("exit");
   exitbtn.disabled = false;
   exitbtn.addEventListener("click", handleError(exitBtnSocket), false);
 
-  // document.getElementById("waitingAgent").style.display = "none";
   $("#loadingModal").modal("hide");
 
   async function exitBtnSocket() {
-    let confirmed = window.confirm("Exit To Main Menu?");
-    if (closed) {
-      window.location.pathname = "/";
-      return;
-    }
+    let confirmed = window.confirm("Leave the chat session?");
     if (confirmed) {
       closeBoolean = true;
       endChat();
@@ -563,8 +523,7 @@ function initUI(conversation) {
       socket.close();
       toggleInputFields(true);
       elementRemoveListeners(document.getElementById("exit"));
-
-      // window.location.pathname = "/";
+      document.getElementById("exit").disabled = true;
     }
   }
 }
@@ -735,7 +694,6 @@ function voiceChat() {
 
     if (call.status.value == "active") {
       document.getElementById("p1").innerHTML = "Connected";
-      // addMessage("", "Picked Up Call", "left");
       $("#myModal").modal("toggle");
       elementRemoveListeners(document.getElementById("voiceChat"));
       document.getElementById("voiceChat").innerText = "End Call";
@@ -743,12 +701,10 @@ function voiceChat() {
       document
         .getElementById("voiceChat")
         .addEventListener("click", terminateCall);
-      // close_btn.addEventListener("click", terminateCall);
 
       console.log("Connected");
     } else if (event.detail.status.value == "Unknown") {
       document.getElementById("p1").innerHTML = "Call Terminated";
-      // addMessage("", "Call Terminated", "left");
       elementRemoveListeners(document.getElementById("voiceChat"));
       document.getElementById("voiceChat").innerText = "Voice Chat";
       document.getElementById("voiceChat").className = "btn btn-primary px-1";
@@ -799,21 +755,3 @@ window.onunload = function end() {
     )
   );
 };
-// window.addEventListener(
-//   "unload",
-//   () => {
-//     navigator.sendBeacon(
-//       "https://localhost:3005/sdk/end",
-//       new Blob(
-//         [
-//           JSON.stringify({
-//             customer_email: customer_email,
-//             rainbow_id: agentId,
-//           }),
-//         ],
-//         { type: "application/json; charset=UTF-8" }
-//       )
-//     );
-//   },
-//   false
-// );
