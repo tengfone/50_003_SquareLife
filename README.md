@@ -22,13 +22,8 @@
 - [FrontEnd (ExpressJS & RainbowWebSDK) & BackEnd (RainbowNodeSDK)](/FrontEnd)    
 - [Routing Engine (Java)](https://github.com/han-keong/routingengine)    
 - [Unit Testing (Java: J-Unit Testing and Selenium)](/SquareLifeTest)    
-#### ScreenShots
-  
-![frontend1](./Screenshots/Front1.png)  
-![frontend2](./Screenshots/Front2.png)  
-![frontend3](./Screenshots/Front3.png)  
-![frontend4](./Screenshots/Front4.png)  
-![frontend5](./Screenshots/Front5.png)  
+### Overview
+![overview](./Screenshots/overview.png)
 
 ---  
 ### Documentation    
@@ -93,7 +88,15 @@ Our [Routing Engine](https://github.com/han-keong/routingengine) runs on a Prior
 Our [Routing Engine](https://github.com/han-keong/routingengine) is scalable and flexible which is able to support any type of customer solution and is not limited to Rainbow SDK, it takes an API response and returns a JSON object.
 
 For more detailed information refer to: [Routing Engine](https://github.com/han-keong/routingengine)
-    
+
+---
+#### ScreenShots
+  
+![frontend1](./Screenshots/Front1.png)  
+![frontend2](./Screenshots/Front2.png)  
+![frontend3](./Screenshots/Front3.png)  
+![frontend4](./Screenshots/Front4.png)  
+![frontend5](./Screenshots/Front5.png)  
 ---    
  ##### Done By:    
  - [Leo Ding Hao](https://github.com/leo-dh)    
