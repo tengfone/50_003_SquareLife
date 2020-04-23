@@ -49,7 +49,7 @@ public class AgentTesting {
   }
 
   private void agentLogin() throws InterruptedException {
-    driver.get("https://web-sandbox.openrainbow.com/app/1.68.4/index.html");
+    driver.get("https://web-sandbox.openrainbow.com/app/1.70.4/index.html");
     WebElement usernameField = driver.findElement(By.id("username"));
     usernameField.sendKeys(AGENT1_USERNAME);
     WebElement submitButton =
@@ -67,7 +67,7 @@ public class AgentTesting {
     connectButton.click();
 
     wait.until(ExpectedConditions
-        .urlToBe("https://web-sandbox.openrainbow.com/app/1.68.4/index.html#/main/home"));
+        .urlToBe("https://web-sandbox.openrainbow.com/app/1.70.4/index.html#/main/home"));
     String dismissModalButtonXpath =
         "//button[@class='buttonTour' and contains(.,'Remind me later')]";
     WebElement dismissModalButton = wait

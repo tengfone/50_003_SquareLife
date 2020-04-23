@@ -377,7 +377,7 @@ function assignInputListeners() {
     document.getElementById("usermsg").value = "";
     let d = new Date().toLocaleString();
     userDLChatLog.push(
-      d + "<===> From: " + firstName + " " + lastName + ": " + message
+      d + "<===> From: " + firstName + " " + lastName + ": " + message + "\n"
     );
     rainbowSDK.im.sendMessageToConversation(associatedConversation, message);
     addMessage(firstName + " " + lastName, message, "right");
@@ -497,7 +497,7 @@ function initUI(conversation) {
         await reassignAgent(Number(type));
         reinitialiseChat();
         toggleInputFields(false);
-        $("#loadingModal").modal("show");
+        $("#loadingModal").modal("hide");
         // document.getElementById("waitingAgent").style.display = "none";
       } else {
         console.log(message);
@@ -561,7 +561,10 @@ function initUI(conversation) {
       endChat();
       await closeSupportRequest();
       socket.close();
-      window.location.pathname = "/";
+      toggleInputFields(true);
+      elementRemoveListeners(document.getElementById("exit"));
+
+      // window.location.pathname = "/";
     }
   }
 }
@@ -732,6 +735,7 @@ function voiceChat() {
 
     if (call.status.value == "active") {
       document.getElementById("p1").innerHTML = "Connected";
+      // addMessage("", "Picked Up Call", "left");
       $("#myModal").modal("toggle");
       elementRemoveListeners(document.getElementById("voiceChat"));
       document.getElementById("voiceChat").innerText = "End Call";
@@ -744,6 +748,11 @@ function voiceChat() {
       console.log("Connected");
     } else if (event.detail.status.value == "Unknown") {
       document.getElementById("p1").innerHTML = "Call Terminated";
+      // addMessage("", "Call Terminated", "left");
+      elementRemoveListeners(document.getElementById("voiceChat"));
+      document.getElementById("voiceChat").innerText = "Voice Chat";
+      document.getElementById("voiceChat").className = "btn btn-primary px-1";
+      document.getElementById("voiceChat").addEventListener("click", voiceChat);
     } else if (event.detail.status.value == "dialing") {
       elementRemoveListeners(document.getElementById("close_btn"));
       document

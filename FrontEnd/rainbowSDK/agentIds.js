@@ -4,7 +4,6 @@ const agentIds = {
     rainbow_id: "5e5a632d6c332176648fdac4",
     skills: {
       GENERAL_ENQUIRY: true,
-      CHECK_BILL: true,
       CHECK_SUBSCRIPTION: true,
     },
   },
