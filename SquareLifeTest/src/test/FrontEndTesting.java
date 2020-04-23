@@ -661,15 +661,13 @@ public class FrontEndTesting {
 	}
 
 	/*
-	 * *PRE-REQUISITE* Accepts First Request from DropDown Task with Pre-set 3 Available Agents in
+	 * *PRE-REQUISITE* Accepts 2nd option from DropDown Task with Pre-set 1 Available Agents in
 	 * Queue.
 	 */
 	@Test
 	public void testQueueSystem() throws Exception {
 		System.out.println("Starting Test " + new Object() {
 		}.getClass().getEnclosingMethod().getName());
-
-
 		agentTesting.agentLogin(); // Tab 1
 		agentTesting.setNewCustomer("User1FirstName", "User1LastName");
 		agentTesting.switchToFirstTab();
@@ -705,63 +703,5 @@ public class FrontEndTesting {
 		} catch (TimeoutException e) {
 			assert false;
 		}
-
-
-
-		// boolean sendEnabled = false;
-		// int numOfPreAssignAgents = 3;
-		// agentTesting.agentLogin();
-		// // Send button
-		// try {
-		// WebElement send = wait.until(ExpectedConditions.elementToBeClickable(
-		// By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]")));
-		// for (int i = 0; i < numOfPreAssignAgents; i++) {
-		// agentTesting.openNewTab();
-		// driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-		// wait = new WebDriverWait(driver, 20);
-		// driver.get(WEBSITEURL);
-		// firstName = driver.findElement(By.id("firstname"));
-		// secondName = driver.findElement(By.id("lastname"));
-		// email = driver.findElement(By.id("customer_email"));
-		// dropdown = new Select(driver.findElement(By.id("customer_option")));
-		// submit = driver.findElement(By.className("btn-primary"));
-		// fillingUpDetails(i + 2);
-		// if (i == numOfPreAssignAgents - 1) {
-		// break;
-		// } else {
-		// // Send button
-		// WebElement sendBtn = wait.until(ExpectedConditions.visibilityOfElementLocated(
-		// By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]")));
-		// sendEnabled = sendBtn.isEnabled();
-		// } ;
-		// if (sendEnabled)
-		// continue;
-		// else
-		// assert false;
-		// }
-		// } catch (TimeoutException e) {
-		// assert false;
-		// }
-		// ArrayList<String> tabs = new ArrayList<String>(driver.getWindowHandles());
-		// driver.switchTo().window(tabs.get(0));
-		// exit = driver.findElement(By.className("btn-outline-danger"));
-		// exit.click();
-		// driver.switchTo().alert().accept();
-		// Thread.sleep(1000);
-		// driver.switchTo().alert().accept();
-		// Thread.sleep(1000);
-		// driver.switchTo().window(tabs.get(3));
-		// driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-		// WebElement sendBtn = wait.until(ExpectedConditions.visibilityOfElementLocated(
-		// By.xpath("//button[@class='btn btn-primary px-3' and contains(.,'Send')]")));
-		// boolean sendEnabled2 = sendBtn.isEnabled();
-		// assertTrue(sendEnabled2);
-		// driver.close();
-		// driver.switchTo().window(tabs.get(2));
-		// driver.close();
-		// driver.switchTo().window(tabs.get(1));
-		// driver.close();
-		// driver.switchTo().window(tabs.get(0));
-		// driver.close();
 	}
 }

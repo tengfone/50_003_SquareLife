@@ -4,6 +4,9 @@ All Front End testing are contained within `FrontEndTesting.java`.
 
 All tests are asserted true by default.
 
+Requires Rainbow Sandbox WebClient 1.70.5
+
+
 ## Test Cases
 
 | No. | Name                      | Description<sup>1</sup>                         | Expected Value | Actual Value |
@@ -33,7 +36,7 @@ All tests are asserted true by default.
 |     | **XSS Injection Testing** |                                                 |                |              |
 | 21  | testXSSInjection1         | Send a script alert to FirstName LastName input |      True      |     True     |
 | 22  | testXSSInjection2         | Send a script alert to send message input       |      True      |     True     |
-|     | **Test Queue System **    |                                                 |                |              |
+|     | **Test Queue System**     |                                                 |                |              |
 | 23  | testQueueSystem           | Simulate Queuing to Accept A Support Request    |      True      |     True     |
 
 <sup>1</sup> _If input field is not mentioned, it is taken be valid._
